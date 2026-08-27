@@ -3,6 +3,19 @@
 Detailed per-commit history is in [git log](https://github.com/Cl3tus/Anti-Matter-HA/commits/main).
 This file summarizes the notable changes by theme.
 
+## 2.0.5 — QR photo-scan decode retry, fix Android device-link keyboard
+
+- Photo/screenshot QR scanning now retries once against a grayscale +
+  contrast-stretched version of the image before giving up. Fixes decode
+  failures on screenshots/copies (e.g. iPhone screenshot → iMac) that bake in
+  a faint grey cast instead of true white — invisible to the eye but enough
+  to break the decoder's black/white threshold. (#1)
+- Home Assistant device-link field: replaced the native `<input list>`
+  datalist with a custom filtered dropdown. On Android, inside HA's ingress
+  iframe, the native datalist popup could swallow the tap that should open
+  the soft keyboard once the list had 100+ devices, leaving the field
+  focused but impossible to type into. (#2)
+
 ## 2.0.4 — drop category multi-select, credits out of the in-app docs
 
 - Removed category multi-select/bulk-delete entirely (Ctrl/Shift-click,

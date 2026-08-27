@@ -10,7 +10,8 @@ let activeCategories = new Set();
 // HA integration state, filled by loadHaDevices.
 let haDevices = []; // [{id, name, area}] from /api/ha/devices
 let haDeviceById = new Map(); // id -> device
-let haDisplayToId = new Map(); // datalist display string -> id
+let haDisplayToId = new Map(); // display string -> id
+let haDeviceActiveIndex = -1; // keyboard-highlighted row in the suggestion dropdown
 
 // Multi-select for bulk delete (shift/ctrl+click) — separate from the filter
 // selection above and from the category "active" filter state.
@@ -1372,8 +1373,6 @@ function haDeviceDisplay(dev) {
 }
 
 async function loadHaDevices() {
-  const list = document.getElementById("ha-device-options");
-  if (!list) return;
   try {
     const devices = await api("/ha/devices");
     haDevices = Array.isArray(devices) ? devices : [];
@@ -1381,15 +1380,62 @@ async function loadHaDevices() {
     haDevices = []; // HA unavailable — field just stays free/empty
   }
   haDeviceById = new Map(haDevices.map((d) => [d.id, d]));
-  haDisplayToId = new Map();
+  haDisplayToId = new Map(haDevices.map((dev) => [haDeviceDisplay(dev), dev.id]));
+}
+
+// Custom dropdown standing in for native <input list> datalist — see the
+// comment on #ha-device-autocomplete in index.html for why (Android WebView +
+// HA's ingress iframe can leave the field focused but the soft keyboard never
+// appears once the list has 100+ options, which every HA device easily does).
+const HA_DEVICE_SUGGEST_LIMIT = 25;
+
+function renderHaDeviceSuggestions() {
+  const nameInput = document.getElementById("code-ha-device-name");
+  const list = document.getElementById("ha-device-suggestions");
+  if (!nameInput || !list) return;
+  const query = nameInput.value.trim().toLowerCase();
+  const matches = (
+    query ? haDevices.filter((d) => haDeviceDisplay(d).toLowerCase().includes(query)) : haDevices
+  ).slice(0, HA_DEVICE_SUGGEST_LIMIT);
+  haDeviceActiveIndex = -1;
   list.innerHTML = "";
-  for (const dev of haDevices) {
-    const display = haDeviceDisplay(dev);
-    haDisplayToId.set(display, dev.id);
-    const opt = document.createElement("option");
-    opt.value = display;
-    list.appendChild(opt);
+  if (!matches.length) {
+    list.classList.add("hidden");
+    return;
   }
+  for (const dev of matches) {
+    const display = haDeviceDisplay(dev);
+    const li = document.createElement("li");
+    li.textContent = display;
+    li.setAttribute("role", "option");
+    // mousedown (not click) fires before the input's blur, so the value below
+    // lands before the blur handler hides the dropdown out from under it.
+    li.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      nameInput.value = display;
+      resolveHaDeviceInput();
+      hideHaDeviceSuggestions();
+    });
+    list.appendChild(li);
+  }
+  list.classList.remove("hidden");
+}
+
+function hideHaDeviceSuggestions() {
+  document.getElementById("ha-device-suggestions")?.classList.add("hidden");
+  haDeviceActiveIndex = -1;
+}
+
+function moveHaDeviceActive(delta) {
+  const list = document.getElementById("ha-device-suggestions");
+  if (!list || list.classList.contains("hidden")) return;
+  const items = list.children;
+  if (!items.length) return;
+  items[haDeviceActiveIndex]?.classList.remove("active");
+  haDeviceActiveIndex = (haDeviceActiveIndex + delta + items.length) % items.length;
+  const active = items[haDeviceActiveIndex];
+  active.classList.add("active");
+  active.scrollIntoView({ block: "nearest" });
 }
 
 // Resolve the visible device-name input to a device_id in the hidden field. A link
@@ -1804,8 +1850,36 @@ function bindUi() {
   document.getElementById("code-device-vendor")?.addEventListener("input", () => markDeviceFieldUserEdited("code-device-vendor"));
   document.getElementById("code-device-product")?.addEventListener("input", () => markDeviceFieldUserEdited("code-device-product"));
   document.getElementById("code-other-standard")?.addEventListener("input", () => markDeviceFieldUserEdited("code-other-standard"));
-  document.getElementById("code-ha-device-name")?.addEventListener("input", resolveHaDeviceInput);
-  document.getElementById("code-ha-device-name")?.addEventListener("change", resolveHaDeviceInput);
+  const haDeviceNameInput = document.getElementById("code-ha-device-name");
+  haDeviceNameInput?.addEventListener("input", () => {
+    resolveHaDeviceInput();
+    renderHaDeviceSuggestions();
+  });
+  haDeviceNameInput?.addEventListener("focus", renderHaDeviceSuggestions);
+  // A plain blur would hide the dropdown before a tapped/clicked suggestion's
+  // mousedown handler gets to run — give it a beat to win the race.
+  haDeviceNameInput?.addEventListener("blur", () => setTimeout(hideHaDeviceSuggestions, 150));
+  haDeviceNameInput?.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      moveHaDeviceActive(1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      moveHaDeviceActive(-1);
+    } else if (e.key === "Escape") {
+      hideHaDeviceSuggestions();
+    } else if (e.key === "Enter") {
+      const list = document.getElementById("ha-device-suggestions");
+      const active =
+        list && !list.classList.contains("hidden") ? list.children[haDeviceActiveIndex] : null;
+      if (active) {
+        e.preventDefault();
+        haDeviceNameInput.value = active.textContent;
+        resolveHaDeviceInput();
+        hideHaDeviceSuggestions();
+      }
+    }
+  });
   document.getElementById("btn-add-code").onclick = () => openCodeDialog();
   document.getElementById("btn-add-category").onclick = () => {
     categoryCreateTargetSelectId = null;

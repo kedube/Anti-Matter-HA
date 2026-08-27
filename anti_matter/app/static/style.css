@@ -1668,6 +1668,43 @@ body.qr-invert #quickview-image-wrap {
   margin-top: var(--rm-space-3);
 }
 
+/* HA device link field: custom dropdown standing in for native <input list>
+   datalist (see index.html comment for why — Android WebView + iframe). */
+.ha-device-autocomplete {
+  position: relative;
+}
+.ha-device-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: var(--rm-space-2);
+  list-style: none;
+  max-height: 12rem;
+  overflow-y: auto;
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-md, var(--rm-radius-sm));
+  background: var(--rm-surface-elevated);
+  box-shadow: var(--rm-shadow-md);
+}
+.ha-device-suggestions.hidden {
+  display: none;
+}
+.ha-device-suggestions li {
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--rm-radius-sm);
+  font-size: var(--rm-text-sm);
+  cursor: pointer;
+  white-space: normal;
+  word-break: break-word;
+}
+.ha-device-suggestions li:hover,
+.ha-device-suggestions li.active {
+  background: var(--rm-accent-soft);
+}
+
 /* Card action buttons: follow the active theme (were hard-coded light) */
 .matter-label-wrap .card-icon-actions,
 .homekit-label-wrap .card-icon-actions,

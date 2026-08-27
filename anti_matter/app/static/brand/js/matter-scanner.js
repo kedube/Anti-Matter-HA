@@ -344,49 +344,130 @@
     }
   }
 
+  // Screenshots/copies (esp. iPhone screenshot -> iMac) can bake in a faint grey
+  // cast instead of true white — invisible to the eye but enough to break a
+  // decoder's black/white threshold. Both decode paths below try the image as-is
+  // first, then retry once against a grayscale + contrast-stretched version before
+  // giving up, since that's cheap and fixes exactly this failure mode.
+  const MAX_PREPROCESS_DIM = 1800;
+
+  function grayscaleContrastCanvas(bitmap) {
+    const scale = Math.min(1, MAX_PREPROCESS_DIM / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imgData.data;
+    const luma = new Uint8ClampedArray(data.length / 4);
+    let min = 255;
+    let max = 0;
+    for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+      const l = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      luma[j] = l;
+      if (l < min) min = l;
+      if (l > max) max = l;
+    }
+    const range = max - min || 1;
+    for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+      const v = Math.round(((luma[j] - min) / range) * 255);
+      data[i] = v;
+      data[i + 1] = v;
+      data[i + 2] = v;
+    }
+    ctx.putImageData(imgData, 0, 0);
+    return canvas;
+  }
+
   async function scanImageFile(file, onScan, onError, libUrl) {
+    let bitmap = null;
+    try {
+      bitmap = await createImageBitmap(file);
+    } catch {
+      /* fall through — raw decode attempts below still get the original file */
+    }
+
     if ("BarcodeDetector" in global) {
+      const detector = new global.BarcodeDetector({ formats: ["qr_code"] });
       try {
-        const detector = new global.BarcodeDetector({ formats: ["qr_code"] });
-        const bitmap = await createImageBitmap(file);
-        const codes = await detector.detect(bitmap);
-        bitmap.close();
+        const codes = await detector.detect(bitmap || file);
         if (codes.length > 0 && codes[0].rawValue) {
+          bitmap?.close();
           onScan(codes[0].rawValue);
           return;
         }
       } catch (e) {
+        bitmap?.close();
         onError(e);
         return;
       }
+      if (bitmap) {
+        try {
+          const codes = await detector.detect(grayscaleContrastCanvas(bitmap));
+          if (codes.length > 0 && codes[0].rawValue) {
+            bitmap.close();
+            onScan(codes[0].rawValue);
+            return;
+          }
+        } catch {
+          /* ignore — report the generic "not found" below */
+        }
+      }
+      bitmap?.close();
       onError(new Error("No QR code found in image"));
       return;
     }
     // Fallback for browsers without BarcodeDetector (e.g. iOS Safari): html5-qrcode scanFile.
     if (libUrl) {
       let inst = null;
-      try {
-        await loadScript(libUrl);
-        const tmpId = "antimatter-file-scan-tmp";
-        let div = document.getElementById(tmpId);
-        if (!div) {
-          div = document.createElement("div");
-          div.id = tmpId;
-          div.style.display = "none";
-          document.body.appendChild(div);
+      const tmpId = "antimatter-file-scan-tmp";
+      const scanWith = async (fileLike) => {
+        try {
+          await loadScript(libUrl);
+          let div = document.getElementById(tmpId);
+          if (!div) {
+            div = document.createElement("div");
+            div.id = tmpId;
+            div.style.display = "none";
+            document.body.appendChild(div);
+          }
+          inst = new global.Html5Qrcode(tmpId);
+          const text = await inst.scanFile(fileLike, false);
+          await safeClear(inst);
+          return text || null;
+        } catch (e) {
+          await safeClear(inst);
+          throw e;
         }
-        inst = new global.Html5Qrcode(tmpId);
-        const text = await inst.scanFile(file, false);
-        await safeClear(inst);
+      };
+      let firstErr = null;
+      try {
+        const text = await scanWith(file);
         if (text) {
           onScan(text);
           return;
         }
-        onError(new Error("No QR code found in image"));
       } catch (e) {
-        await safeClear(inst);
-        onError(e);
+        firstErr = e;
       }
+      if (bitmap) {
+        try {
+          const blob = await new Promise((resolve) =>
+            grayscaleContrastCanvas(bitmap).toBlob(resolve, "image/png")
+          );
+          if (blob) {
+            const text = await scanWith(new File([blob], "processed.png", { type: "image/png" }));
+            if (text) {
+              onScan(text);
+              return;
+            }
+          }
+        } catch (e) {
+          firstErr = firstErr || e;
+        }
+      }
+      onError(firstErr || new Error("No QR code found in image"));
       return;
     }
     onError(new Error("Photo scan not supported in this browser"));

@@ -314,8 +314,15 @@
       <details id="code-ha-details" class="form-section">
         <summary data-i18n="code.ha_link">Home Assistant link (optional)</summary>
         <label><span data-i18n="code.ha_device">Device</span>
-          <input type="text" id="code-ha-device-name" list="ha-device-options" autocomplete="off" data-i18n-placeholder="code.ha_device_placeholder" placeholder="Start typing a device name…" />
-          <datalist id="ha-device-options"></datalist>
+          <!-- Native <input list=datalist> replaced with a hand-rolled dropdown: inside
+               HA's ingress iframe, Android WebView's datalist popup can swallow the tap
+               that should open the soft keyboard once the list has more than a handful
+               of options (every HA device, easily 100+), leaving the field focused but
+               unable to be typed into. -->
+          <div class="ha-device-autocomplete">
+            <input type="text" id="code-ha-device-name" autocomplete="off" data-i18n-placeholder="code.ha_device_placeholder" placeholder="Start typing a device name…" />
+            <ul id="ha-device-suggestions" class="ha-device-suggestions hidden" role="listbox"></ul>
+          </div>
           <input type="hidden" id="code-ha-device" />
         </label>
         <p id="code-ha-device-suggest" class="form-hint hidden">
