@@ -1,0 +1,129 @@
+{
+  "meta": {
+    "version": 1,
+    "exported_at": "2026-09-28T02:59:40Z",
+    "addon_version": "2.0.5",
+    "source": null,
+    "deletions": {
+      "codes": {},
+      "categories": {}
+    }
+  },
+  "categories": [
+    {
+      "id": "f1161be4-becf-4303-bb4b-b825b414c2ee",
+      "name": "Living room",
+      "color": "#10B981",
+      "icon": "tv",
+      "sort_order": 0,
+      "deleted_at": null
+    },
+    {
+      "id": "70e00e49-a523-4098-a7ae-863171bf4fcc",
+      "name": "Sensors",
+      "color": "#6366f1",
+      "icon": "motion-sensor",
+      "sort_order": 0,
+      "deleted_at": null
+    }
+  ],
+  "codes": [
+    {
+      "id": "f7941b11-2ba1-4834-a10a-7425555c0e98",
+      "name": "Hallway plug",
+      "code_type": "matter",
+      "device_type": "",
+      "device_vendor": "",
+      "device_product": "",
+      "area": "Hallway",
+      "description": "",
+      "category_ids": [
+        "f1161be4-becf-4303-bb4b-b825b414c2ee"
+      ],
+      "manual_code": "3497-011-2332",
+      "qr_payload": "MT:Y.K9042C00KA0648G00",
+      "custom_standard": "",
+      "setup_id": "",
+      "homekit_category": "other",
+      "homekit_flag": 2,
+      "zwave_pin": "",
+      "notes": "",
+      "in_use": true,
+      "conn_wifi": false,
+      "conn_matter": true,
+      "conn_zigbee": false,
+      "conn_bluetooth": false,
+      "conn_zwave": false,
+      "ha_link": {
+        "device_id": null
+      },
+      "created_at": "2026-09-28T02:59:40Z",
+      "updated_at": "2026-09-28T02:59:40Z",
+      "deleted_at": null
+    },
+    {
+      "id": "afa4b873-d3ce-402b-9186-ad53712b7c18",
+      "name": "Door sensor",
+      "code_type": "homekit",
+      "device_type": "",
+      "device_vendor": "",
+      "device_product": "",
+      "area": "",
+      "description": "",
+      "category_ids": [
+        "70e00e49-a523-4098-a7ae-863171bf4fcc"
+      ],
+      "manual_code": "52567089",
+      "qr_payload": "X-HM://0081YCYEP3QYT",
+      "custom_standard": "",
+      "setup_id": "3QYT",
+      "homekit_category": "switch",
+      "homekit_flag": 2,
+      "zwave_pin": "",
+      "notes": "",
+      "in_use": false,
+      "conn_wifi": false,
+      "conn_matter": false,
+      "conn_zigbee": false,
+      "conn_bluetooth": false,
+      "conn_zwave": false,
+      "ha_link": {
+        "device_id": null
+      },
+      "created_at": "2026-09-28T02:59:40Z",
+      "updated_at": "2026-09-28T02:59:40Z",
+      "deleted_at": null
+    },
+    {
+      "id": "60d75018-9332-4d6c-a065-2d196dd2a2c3",
+      "name": "Garage relay",
+      "code_type": "zwave",
+      "device_type": "",
+      "device_vendor": "",
+      "device_product": "",
+      "area": "",
+      "description": "",
+      "category_ids": [],
+      "manual_code": "11111-22222-33333-44444-55555-66666-77777-88888",
+      "qr_payload": "",
+      "custom_standard": "",
+      "setup_id": "",
+      "homekit_category": "other",
+      "homekit_flag": 2,
+      "zwave_pin": "11111",
+      "notes": "spare",
+      "in_use": false,
+      "conn_wifi": false,
+      "conn_matter": false,
+      "conn_zigbee": false,
+      "conn_bluetooth": false,
+      "conn_zwave": false,
+      "ha_link": {
+        "device_id": null
+      },
+      "created_at": "2026-09-28T02:59:40Z",
+      "updated_at": "2026-09-28T02:59:40Z",
+      "deleted_at": null
+    }
+  ]
+}

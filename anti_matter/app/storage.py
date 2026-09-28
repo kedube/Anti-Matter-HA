@@ -19,6 +19,21 @@ VAULT_FILENAME = "anti_matter.json"
 BIN_FILENAME = "anti-matter-bin.json"
 
 
+def _repair_homekit_codes(codes) -> bool:
+    """Rewrite pairing codes from the pre-3.0 31-bit-mask decoder in place; True if any changed."""
+    from homekit_payload import repair_legacy_pairing
+
+    changed = False
+    for code in codes:
+        if code.code_type != "homekit":
+            continue
+        fixed = repair_legacy_pairing(code.manual_code, code.qr_payload)
+        if fixed:
+            code.manual_code = fixed
+            changed = True
+    return changed
+
+
 def _resolve_data_dir(data_dir: str | None) -> Path:
     if data_dir:
         return Path(data_dir)
@@ -94,27 +109,14 @@ class VaultStorage:
 
     def _repair_homekit_pairing(self) -> None:
         """Fix HomeKit pairing codes saved by the pre-3.0 31-bit-mask decoder (vault + bin)."""
-        from homekit_payload import repair_legacy_pairing
-
-        def repair(codes) -> bool:
-            changed = False
-            for code in codes:
-                if code.code_type != "homekit":
-                    continue
-                fixed = repair_legacy_pairing(code.manual_code, code.qr_payload)
-                if fixed:
-                    code.manual_code = fixed
-                    changed = True
-            return changed
-
         with self._lock:
             if self.path.exists():
                 vault = Vault.model_validate(json.loads(self.path.read_text(encoding="utf-8")))
-                if repair(vault.codes):
+                if _repair_homekit_codes(vault.codes):
                     self._write_unlocked(vault)
             if self.bin_path.exists():
                 bin_data = self._load_bin_unlocked()
-                if repair(bin_data.codes):
+                if _repair_homekit_codes(bin_data.codes):
                     self._write_bin_unlocked(bin_data)
 
     def export_json(self) -> str:
@@ -126,6 +128,9 @@ class VaultStorage:
 
     def import_json(self, payload: str, *, merge: bool = False) -> Vault:
         incoming = Vault.model_validate(json.loads(payload))
+        # Exports and backups from 2.x (e.g. moving over from another install) carry the
+        # same legacy HomeKit codes that _repair_homekit_pairing fixes on disk at startup.
+        _repair_homekit_codes(incoming.codes)
         with self._lock:
             if merge and self.path.exists():
                 current = Vault.model_validate(

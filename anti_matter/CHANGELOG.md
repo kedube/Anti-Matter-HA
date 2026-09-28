@@ -3,6 +3,16 @@
 Detailed per-commit history is in [git log](https://github.com/Cl3tus/Anti-Matter-HA/commits/main).
 This file summarizes the notable changes by theme.
 
+## 3.0.1 — moving a vault over from another install
+
+- **Imported HomeKit codes are repaired right away.** An export or backup from 2.x can hold HomeKit pairing codes
+  decoded with the old, wrong bit mask. 3.0.0 fixed those only on the next add-on start. Import now fixes them as the
+  file comes in.
+- **New guide: moving from another repository.** Installing Anti-Matter from a different repository (for example a
+  fork instead of `Cl3tus/HA-Addons`) gives a separate add-on with an empty vault; your old vault stays in the old
+  add-on's folder. The Documentation tab and the README now explain the two ways to bring it over: **Export** →
+  **Import**, or copy the files over Samba to keep the Trash and backups too.
+
 ## 3.0.0 — redesign, new scanner, 24 languages
 
 A complete rebuild of the interface and the scanner. Your vault, Trash, backups, schedule and options carry over

@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="anti_matter/CHANGELOG.md"><img src="https://img.shields.io/badge/version-3.0.0-blue" alt="Version 3.0.0"></a>
+  <a href="anti_matter/CHANGELOG.md"><img src="https://img.shields.io/badge/version-3.0.1-blue" alt="Version 3.0.0"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/Home%20Assistant-add--on-41BDF5?logo=homeassistant&logoColor=white" alt="Home Assistant add-on">
   <img src="https://img.shields.io/badge/aarch64-yes-green" alt="Supports aarch64">
@@ -289,7 +289,7 @@ lookup uses a 6-second timeout, and its answers are cached by the page for the s
 
 Update from the app store as usual. Taking a **Back up now** first is a good habit.
 
-- **Nothing to migrate.** Your vault, Trash, backups, schedule and options are used as they are. The option values `Auto`, `English` and `Nederlands` are still valid.
+- **Nothing to migrate** when you update in place. Your vault, Trash, backups, schedule and options are used as they are. The option values `Auto`, `English` and `Nederlands` are still valid. Installing from a *different* repository is not an update: see [Switching repositories](#switching-repositories).
 - **HomeKit pairing codes are repaired once.** Versions before 3.0 decoded some `X-HM://` setup URIs with the wrong bit mask, which gave the wrong 8 digits. On first start, 3.0 fixes every saved HomeKit code (in the vault and in the Trash) whose digits exactly match that old mistake. Codes you typed yourself are never touched.
 - **Stricter duplicate detection.** Anti-Matter now also recognises the same device across its QR and its manual code, and across a Z-Wave QR and its DSK. If your vault already holds the same device twice, both entries stay. Saving a change to either one (including linking it to a Home Assistant device) shows *Already saved as…* until you move the extra copy to the Trash.
 - **Different clicks.** A click or tap on a card or table row opens its details; double-clicking is no longer needed. Right-click opens the actions menu instead of the editor. Each card has a pencil button, and `E` opens the editor.
@@ -297,6 +297,22 @@ Update from the app store as usual. Taking a **Back up now** first is a good hab
 - **Downloads are PNG for every protocol.** HomeKit and Z-Wave labels were SVG before.
 
 See the [changelog](anti_matter/CHANGELOG.md) for the full list.
+
+### Switching repositories
+
+Home Assistant treats Anti-Matter from another repository (for example a fork instead of `Cl3tus/HA-Addons`) as a
+separate add-on, with its own empty config folder. Your old vault stays where it was. Bring it over in one of two
+ways:
+
+- **Export and import** (the vault): in the old Anti-Matter, click **Export**. In the new one, choose **Import a
+  JSON export** on the empty vault, pick `anti-matter-export.json` and confirm. A file from the old `backups/`
+  folder, or the old `anti_matter.json` itself, imports the same way.
+- **Copy the folder** (everything, including the Trash, backups and schedule): stop the new add-on, copy
+  `anti_matter.json`, `anti-matter-bin.json`, `backup_settings.json` and `backups/` from the old
+  `…_anti_matter` folder to the new one over Samba (see [Storage & backups](#storage--backups)), then start it.
+
+Either way, HomeKit codes from 2.x are repaired. Add-on options such as language and theme are not carried over,
+so set them again on the Configuration tab. When everything is there, uninstall the old add-on.
 
 ## Development
 

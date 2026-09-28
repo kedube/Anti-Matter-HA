@@ -239,6 +239,19 @@ The add-on's config folder is `/config` inside the add-on. Over Samba it is:
 `74e2a2e6`. Older setups call the share `addon_configs`. This folder is included in Home Assistant backups whenever
 the Anti-Matter add-on is part of the backup.
 
+### Moving from another repository
+
+Anti-Matter installed from a different repository (for example a fork instead of `Cl3tus/HA-Addons`) is a separate
+add-on with its own, empty folder. Your old vault stays in the old folder. To bring it over:
+
+- **The vault:** click **Export** in the old Anti-Matter, then **Import a JSON export** in the new one. A file from
+  the old `backups/` folder, or the old `anti_matter.json`, works too.
+- **Everything, including the Trash and backups:** stop the new add-on, copy the four items listed above from the old
+  `…_anti_matter` folder into the new one, then start it.
+
+HomeKit codes saved by 2.x are repaired either way. Set the add-on options again on the Configuration tab, then
+uninstall the old add-on.
+
 ---
 
 ## Language and theme

@@ -32,7 +32,7 @@
   "use strict";
 
   var doc = global.document;
-  var V = "?v=3.0.0";
+  var V = "?v=3.0.1";
   var SPRITE = "./static/brand/icons-mdi.svg" + V;
   var FONT_CSS = "./static/vendor/mdi/css/materialdesignicons.min.css" + V;
   var SVG_NS = "http://www.w3.org/2000/svg";
