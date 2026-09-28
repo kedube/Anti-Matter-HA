@@ -347,6 +347,11 @@ Anti-Matter is a rewrite of [Rematters](https://github.com/Rematters/Rematters-H
 ([JesseFPV](https://rematters.casa/)), reworked into a cloud-free, local-only add-on. Full credit to Jesse for the
 original Rematters add-on and its design.
 
+This repository is a fork of [Cl3tus/Anti-Matter-HA](https://github.com/Cl3tus/Anti-Matter-HA). Since its 2.0.5
+release, about **82% of the code is new or updated**: a rebuilt interface and scanner, 24 languages, tests, and CI
+and release automation. The figure counts hand-written code only, not translations, docs or vendored libraries. The
+backend is still largely Cl3tus's work.
+
 Anti-Matter builds on [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT) and
 [zxing-cpp](https://github.com/zxing-cpp/zxing-cpp) (Apache-2.0), [Lucide](https://lucide.dev) icons (ISC),
 [Material Design Icons](https://pictogrammers.com/library/mdi/) (Pictogrammers Free License), the Manrope and
