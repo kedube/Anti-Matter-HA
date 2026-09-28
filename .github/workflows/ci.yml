@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call: # reused by release.yml before anything is published
+
+permissions:
+  contents: read
+
+concurrency:
+  # github.workflow is the caller's name when reused, so a release run never cancels
+  # (or is cancelled by) the regular CI run for the same push.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Add-on config lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: frenck/action-addon-linter@v2
+        with:
+          path: ./anti_matter
+
+  checks:
+    name: Version, i18n and JS syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Version is the same everywhere
+        run: python3 tools/ci/version.py check
+      - name: Translation keys, placeholders and plurals
+        run: python3 tools/ci/check_i18n.py --locales
+      - name: JavaScript parses
+        run: find anti_matter/app/static -name '*.js' -not -path '*/vendor/*' -print0 | xargs -0 -n1 node --check
+
+  test:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12" # matches the add-on base image
+          cache: pip
+          cache-dependency-path: anti_matter/app/requirements.txt
+      - run: pip install -r anti_matter/app/requirements.txt pytest
+      - run: python -m pytest -q tests
+        working-directory: anti_matter
+
+  smoke:
+    name: Browser smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: anti_matter/app/requirements.txt
+      - run: pip install -r anti_matter/app/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/ci/package-lock.json
+      - run: npm ci
+        working-directory: tools/ci
+      - run: npx playwright install --with-deps chromium
+        working-directory: tools/ci
+      - run: node smoke.mjs
+        working-directory: tools/ci
+        env:
+          PYTHON: python
+
+  build:
+    name: Docker build (${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+          - arch: aarch64
+            platform: linux/arm64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Base image from build.yaml
+        id: base
+        run: echo "from=$(yq '.build_from.${{ matrix.arch }}' anti_matter/build.yaml)" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-qemu-action@v3
+        if: matrix.arch != 'amd64'
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: anti_matter
+          platforms: ${{ matrix.platform }}
+          build-args: BUILD_FROM=${{ steps.base.outputs.from }}
+          push: false
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}

@@ -319,7 +319,9 @@ Outside Home Assistant, the device and area features are simply off.
 - **Back-end tests:** `cd anti_matter && ../.venv/bin/python -m pytest -q tests`
 - **Screenshots:** [`tools/screenshots`](tools/screenshots/README.md) regenerates every README and wiki image, the GIF and the banner from the real UI with a fake demo vault (`npm install`, then `node capture.mjs`).
 - **Z-Wave device names:** `anti_matter/tools/build_zwave_device_db.py` refreshes the bundled zwave-js snapshot.
-- **Releasing:** bump the version in `anti_matter/config.yaml`, `anti_matter/run.sh`, `APP_VERSION` in `main.py`, `addon_version` in `models.py`, `VERSION` in `static/js/core.js` and `static/brand/js/scan-engine.js`, and the `?v=` cache busters in `static/index.html`. Then add a changelog entry and update the badges.
+- **Checks:** `python3 tools/ci/version.py check` (the version matches everywhere), `python3 tools/ci/check_i18n.py --locales` (translation keys, placeholders, plurals) and a browser smoke test (`cd tools/ci && npm ci && npx playwright install chromium && node smoke.mjs`).
+- **CI:** every push and pull request runs the add-on linter, those checks, the back-end tests, the smoke test and a Docker build for amd64 and aarch64 ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+- **Releasing:** run `python3 tools/ci/version.py bump X.Y.Z`, which updates every copy of the version and adds a CHANGELOG stub. Fill in the CHANGELOG entry and push to `main`. [`release.yml`](.github/workflows/release.yml) then runs CI, tags `vX.Y.Z`, publishes a GitHub release with that CHANGELOG section, and mirrors `anti_matter/` into [HA-Addons](https://github.com/Cl3tus/HA-Addons). The mirror step needs a `HA_ADDONS_TOKEN` secret: a fine-grained token with *Contents: read and write* on the HA-Addons repository. Without it the release is still made and the mirror step is skipped with a warning. The `HA_ADDONS_REPO` repository variable overrides the target.
 
 </details>
 

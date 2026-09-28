@@ -6,20 +6,17 @@ url: https://github.com/Cl3tus/Anti-Matter-HA
 arch:
   - aarch64
   - amd64
-startup: application
-boot: auto
 init: false
 
-# --- Ingress: appears in the HA sidebar, HA handles auth ---
+# --- Ingress: appears in the HA sidebar, HA handles auth (default ingress_port 8099,
+#     which run.sh listens on) ---
 ingress: true
-ingress_port: 8099
 panel_admin: false
 panel_icon: mdi:qrcode-scan
 panel_title: Anti-Matter
 
 # --- Read-only access to HA (entities + areas via the Supervisor proxy) ---
 homeassistant_api: true
-hassio_api: false
 
 # The vault + timestamped backups are stored in the add-on config folder,
 # reachable over SAMBA at \\<HA-IP>\app_configs\<repo-hash>_anti_matter and included in HA backups.

@@ -1,0 +1,12 @@
+{
+  "name": "anti-matter-ci",
+  "private": true,
+  "description": "Browser smoke test run by GitHub Actions (see .github/workflows/ci.yml).",
+  "type": "module",
+  "scripts": {
+    "smoke": "node smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}

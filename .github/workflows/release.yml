@@ -1,0 +1,103 @@
+name: Release
+
+# Bump the version (python3 tools/ci/version.py bump X.Y.Z), fill in the CHANGELOG entry and
+# push to main. When anti_matter/config.yaml carries a version that has no tag yet, this
+# runs the full CI, tags vX.Y.Z, publishes a GitHub release with that CHANGELOG section,
+# and mirrors anti_matter/ into the add-on store repository (HA-Addons).
+
+on:
+  push:
+    branches: [main]
+    paths: [anti_matter/config.yaml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Detect new version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      release: ${{ steps.v.outputs.release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: v
+        run: |
+          version=$(python3 tools/ci/version.py get)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::v$version is already released — nothing to do"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            python3 tools/ci/version.py notes "$version" > /dev/null # fail early without a CHANGELOG entry
+          fi
+
+  ci:
+    name: CI
+    needs: prepare
+    if: needs.prepare.outputs.release == 'true'
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: Tag and GitHub release
+    needs: [prepare, ci]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/ci/version.py notes "$VERSION" > notes.md
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v$VERSION" --target "$GITHUB_SHA" \
+            --title "Anti-Matter $VERSION" --notes-file notes.md
+
+  sync:
+    name: Publish to the add-on store repository
+    needs: [prepare, release]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      STORE_REPO: ${{ vars.HA_ADDONS_REPO || 'Cl3tus/HA-Addons' }}
+      HAS_TOKEN: ${{ secrets.HA_ADDONS_TOKEN != '' }}
+    steps:
+      - name: Needs the HA_ADDONS_TOKEN secret
+        if: env.HAS_TOKEN != 'true'
+        run: echo "::warning::HA_ADDONS_TOKEN is not set — skipped publishing v$VERSION to $STORE_REPO"
+      - uses: actions/checkout@v4
+        if: env.HAS_TOKEN == 'true'
+        with:
+          path: src
+      - uses: actions/checkout@v4
+        if: env.HAS_TOKEN == 'true'
+        with:
+          repository: ${{ env.STORE_REPO }}
+          token: ${{ secrets.HA_ADDONS_TOKEN }}
+          path: store
+      - name: Mirror anti_matter/ and push
+        if: env.HAS_TOKEN == 'true'
+        run: |
+          rsync -a --delete --exclude 'tests/' --exclude '__pycache__/' --exclude '.pytest_cache/' \
+            src/anti_matter/ store/anti_matter/
+          # Same commit style as the manual syncs: "sync: anti_matter vX.Y.Z (<CHANGELOG title>)"
+          summary=$(python3 src/tools/ci/version.py notes "$VERSION" | head -1 | sed -E 's/^## [0-9.]+ *(— *)?//')
+          cd store
+          git add -A anti_matter
+          if git diff --cached --quiet; then
+            echo "::notice::$STORE_REPO already has anti_matter v$VERSION"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "sync: anti_matter v$VERSION${summary:+ ($summary)}"
+          git push

@@ -109,6 +109,12 @@ unchanged, so there is nothing to migrate. See *Upgrade notes* at the end of thi
   - how the *Backups to keep* option relates to the in-app schedule
 - Every screenshot, the scan GIF, the banner and the social preview were regenerated from the new UI with a fake demo vault. The generator is `tools/screenshots` (`node capture.mjs`).
 
+### Tooling
+
+- CI on every push and pull request: add-on linter, version consistency, translation checks, back-end tests, a browser smoke test and Docker builds for amd64 and aarch64.
+- Automatic releases: pushing a new version to `main` tags it, publishes a GitHub release from this changelog and mirrors the add-on into the HA-Addons store repository.
+- `config.yaml` drops keys that only repeated Home Assistant's defaults (`startup`, `boot`, `ingress_port`, `hassio_api`); behaviour is unchanged.
+
 ### Upgrade notes
 
 - **Nothing to migrate.** HomeKit codes are repaired automatically on first start, as described under *Fixes*.
