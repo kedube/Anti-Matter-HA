@@ -1,0 +1,62 @@
+/* Shared styles for the composite / brand templates (rendered by capture.mjs with Playwright).
+   Fonts and tokens come straight from the add-on so the images match the app. */
+@import url("../../../anti_matter/app/static/vendor/fonts.css");
+@import url("../../../anti_matter/app/static/css/tokens.css");
+
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body { font-family: var(--font-ui); color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; }
+
+/* Void backdrop: aurora, particle dust and faint orbits (the app's own art direction). */
+.void { position: absolute; inset: 0; overflow: hidden; background: #080719; }
+.void::before {
+  content: ""; position: absolute; inset: 0;
+  background:
+    radial-gradient(55% 60% at 82% 0%, rgba(110, 70, 255, .34), transparent 70%),
+    radial-gradient(45% 55% at 4% 18%, rgba(40, 200, 230, .16), transparent 70%),
+    radial-gradient(50% 50% at 50% 115%, rgba(224, 80, 154, .13), transparent 70%);
+}
+.void::after {
+  content: ""; position: absolute; inset: 0; opacity: .9;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(200, 190, 255, .28) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 70% 60%, rgba(200, 190, 255, .22) 0 1px, transparent 1.4px),
+    radial-gradient(circle at 40% 80%, rgba(200, 190, 255, .18) 0 .8px, transparent 1.2px);
+  background-size: 173px 173px, 241px 241px, 97px 97px;
+}
+.orbits { position: absolute; inset: 0; width: 100%; height: 100%; }
+.orbits ellipse { fill: none; stroke: rgba(160, 145, 255, .20); stroke-width: 1; }
+
+/* Screens */
+.shot { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+.window {
+  position: absolute; overflow: hidden; border-radius: 16px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .10), 0 30px 80px -20px rgba(0, 0, 0, .85), 0 0 60px -10px rgba(110, 80, 255, .35);
+}
+
+/* Phone frame (drawn, not a vendor device image), native iPhone-like proportions. */
+.phone {
+  position: absolute; left: 0; top: 0; width: 412px; height: 866px; padding: 11px; border-radius: 62px;
+  background: linear-gradient(145deg, #3a3754, #14121f 40%, #262338);
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .16) inset, 0 50px 110px -30px rgba(0, 0, 0, .9), 0 0 60px -14px rgba(110, 80, 255, .5);
+}
+.phone__screen { position: relative; width: 390px; height: 844px; overflow: hidden; border-radius: 52px; background: #000; display: flex; flex-direction: column; }
+.phone__status {
+  flex: none; height: 47px; display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 30px 0 44px; font: 650 17px/1 var(--font-ui); letter-spacing: -.01em;
+}
+.phone__status svg { display: block; }
+.phone__status .r { display: flex; gap: 6px; align-items: center; }
+.phone__island { position: absolute; top: 11px; left: 50%; transform: translateX(-50%); width: 122px; height: 35px; border-radius: 20px; background: #000; z-index: 2; }
+.phone__screen img { display: block; width: 390px; height: 776px; flex: none; object-fit: cover; object-position: top; }
+.phone__home { flex: none; height: 21px; display: flex; align-items: center; justify-content: center; }
+.phone__home span { width: 134px; height: 5px; border-radius: 3px; background: currentColor; opacity: .85; }
+.phone.is-light .phone__status, .phone.is-light .phone__home { background: #F3F2FA; color: #16142E; }
+.phone.is-dark .phone__status, .phone.is-dark .phone__home { background: #080719; color: #F1F0FF; }
+.phone.is-black .phone__status, .phone.is-black .phone__home { background: #000; color: #fff; }
+
+/* Tear: dark screen with a light screen revealed along a diagonal seam. */
+.tear { position: absolute; inset: 0; }
+.tear img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+.tear .light { clip-path: polygon(var(--t1) 0, 100% 0, 100% 100%, var(--t2) 100%); }
+.tear svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }

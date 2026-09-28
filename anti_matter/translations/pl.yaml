@@ -1,0 +1,25 @@
+configuration:
+  interface:
+    name: Interfejs
+    fields:
+      language:
+        name: Język
+        description: >-
+          Język aplikacji. „Auto” korzysta z języka Home Assistant, a następnie z języka
+          przeglądarki. Każdy język jest podany pod własną nazwą. Język wybrany
+          bezpośrednio w aplikacji jest zapamiętywany osobno dla każdej przeglądarki i
+          ma pierwszeństwo przed tym ustawieniem.
+      theme:
+        name: Motyw
+        description: >-
+          Motyw kolorystyczny: „Light” (jasny) lub „Dark” (ciemny). „Auto” korzysta z
+          ustawienia jasnego/ciemnego motywu w Home Assistant.
+  backup:
+    name: Kopia zapasowa
+    fields:
+      keep_count:
+        name: Liczba przechowywanych kopii
+        description: >-
+          Ile kopii zapasowych ze znacznikiem czasu przechowywać w folderze
+          konfiguracyjnym dodatku (dostępnym przez SAMBA). Starsze kopie są usuwane
+          automatycznie.

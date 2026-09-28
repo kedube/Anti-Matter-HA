@@ -1,0 +1,80 @@
+{
+  "categories": [
+    {
+      "id": "7493915b-dd38-5887-b881-f51005fb13f5",
+      "name": "Holiday lights",
+      "color": "#E11D48",
+      "icon": "string-lights",
+      "sort_order": 6,
+      "deleted_at": "2026-08-28T09:00:00Z"
+    }
+  ],
+  "codes": [
+    {
+      "id": "5709e2a6-cab1-5098-b98d-5be7f6dc09c0",
+      "name": "Old porch light",
+      "code_type": "matter",
+      "device_type": "light",
+      "device_vendor": "IKEA of Sweden",
+      "device_product": "KAJPLATS",
+      "area": "Garden",
+      "description": "",
+      "category_ids": [
+        "7493915b-dd38-5887-b881-f51005fb13f5"
+      ],
+      "manual_code": "1649-632-8144",
+      "qr_payload": "MT:CUO00AHA13EAKX31.00",
+      "custom_standard": "",
+      "setup_id": "",
+      "homekit_category": "other",
+      "homekit_flag": 2,
+      "zwave_pin": "",
+      "notes": "",
+      "in_use": false,
+      "conn_wifi": false,
+      "conn_matter": true,
+      "conn_zigbee": false,
+      "conn_bluetooth": false,
+      "conn_zwave": false,
+      "ha_link": {
+        "device_id": null
+      },
+      "created_at": "2026-02-03T09:00:00Z",
+      "updated_at": "2026-02-05T09:00:00Z",
+      "deleted_at": "2026-08-28T09:00:00Z"
+    },
+    {
+      "id": "d18bb5b5-a67d-5e22-b1d8-667c7216317b",
+      "name": "Guest room sensor",
+      "code_type": "zwave",
+      "device_type": "door_sensor",
+      "device_vendor": "Zooz",
+      "device_product": "ZSE41 Open/Close XS",
+      "area": "Guest room",
+      "description": "",
+      "category_ids": [
+        "89c95291-aabd-545b-8458-5d7cf06f2265"
+      ],
+      "manual_code": "",
+      "qr_payload": "900151235135304180720451990126304087102295360041884200100409701792022000634000020007200258080201",
+      "custom_standard": "",
+      "setup_id": "",
+      "homekit_category": "other",
+      "homekit_flag": 2,
+      "zwave_pin": "30418",
+      "notes": "",
+      "in_use": false,
+      "conn_wifi": false,
+      "conn_matter": false,
+      "conn_zigbee": false,
+      "conn_bluetooth": false,
+      "conn_zwave": true,
+      "ha_link": {
+        "device_id": null
+      },
+      "created_at": "2026-02-23T09:00:00Z",
+      "updated_at": "2026-02-25T09:00:00Z",
+      "deleted_at": "2026-08-21T09:00:00Z"
+    }
+  ]
+}

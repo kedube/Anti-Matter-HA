@@ -5,8 +5,9 @@ configuration:
       language:
         name: Language
         description: >-
-          Interface language for the app. "Auto" follows your Home Assistant
-          language, then your browser.
+          Language of the app. "Auto" follows your Home Assistant language, then your
+          browser. Each language is listed by its own name. A language chosen inside the
+          app is remembered per browser and takes precedence over this setting.
       theme:
         name: Theme
         description: >-

@@ -1,0 +1,178 @@
+/* =====================================================================
+   Anti-Matter 3.0 app runtime styles (foundation): boot & loading,
+   layer motion (sheets, dialogs, scrims), popovers, tooltips, toasts,
+   brand-as-button, More / Language / Shortcuts / Category-manager sheets,
+   load error, category letter fallback, print. Tokens only, logical
+   properties only, no per-theme rules.
+   ===================================================================== */
+
+/* ---------- Boot: nothing localized flashes; revealed by boot.js (CSS fallback after 3 s) ---------- */
+html.am-booting #app, html.am-booting .dock { visibility: hidden; animation: am-reveal 0s 3s forwards; }
+@keyframes am-reveal { to { visibility: visible; } }
+#view-loading { pointer-events: none; }
+html.am-loaded #view-loading { display: none; }
+.load-error { display: grid; justify-items: center; gap: 12px; text-align: center; padding: 48px 24px; max-inline-size: 520px; margin-inline: auto; }
+.load-error .confirm__icon { inline-size: 52px; block-size: 52px; }
+
+/* ---------- Scroll lock while a layer is open ---------- */
+html.am-locked, html.am-locked body { overflow: hidden; }
+html.am-locked body { overscroll-behavior: none; }
+
+/* ---------- Layers: enter/exit motion (SPEC §14). JS toggles .is-open ---------- */
+#layers > .layer { transition: opacity var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-out); opacity: 0; }
+#layers > .layer.is-open { opacity: 1; transform: none; }
+#layers > .sheet--side.layer:not(.is-open) { transform: translateX(24px); }
+[dir="rtl"] #layers > .sheet--side.layer:not(.is-open) { transform: translateX(-24px); }
+#layers > .dialog.layer:not(.is-open) { transform: translateY(10px) scale(.985); }
+#layers > .present.layer, #layers > .scanner.layer { transition-duration: var(--dur-2); }
+@media (max-width: 720px) {
+  #layers > .sheet--side.layer:not(.is-open), #layers > .sheet--bottom.layer:not(.is-open),
+  #layers > .dialog--lg.layer:not(.is-open), [dir="rtl"] #layers > .sheet--side.layer:not(.is-open) { transform: translateY(32px); }
+}
+.scrim { opacity: 0; transition: opacity var(--dur-2) var(--ease-out); }
+.scrim.is-open { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  #layers > .layer, #layers > .layer:not(.is-open) { transform: none !important; }
+}
+.layer:focus { outline: none; }
+/* Sheets never exceed the viewport; the body scrolls, head/foot stay pinned */
+.sheet { max-block-size: calc(100vh - 24px); max-block-size: calc(100dvh - 24px); }
+.sheet__head .sheet__heading { flex: 1; min-inline-size: 0; }
+.sheet__head > .icon-btn:last-child, .sheet__head .detail__nav { margin-inline-start: auto; }
+.sheet__icon { inline-size: 40px; block-size: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; background: var(--accent-soft); color: var(--accent); }
+.sheet__icon .icon { inline-size: 22px; block-size: 22px; }
+.sheet__icon--danger { background: var(--danger-soft); color: var(--danger); }
+.sheet__icon--ok { background: var(--ok-soft); color: var(--ok); }
+.sheet--sm-title .sheet__title { font-size: var(--fs-title-2); }
+
+/* ---------- Confirm / alert tones ---------- */
+.confirm__icon--warn { background: var(--warn-soft); color: var(--warn); }
+.confirm__icon--info, .confirm__icon--accent { background: var(--accent-soft); color: var(--accent); }
+.confirm__icon--ok { background: var(--ok-soft); color: var(--ok); }
+.confirm__icon--error { background: var(--danger-soft); color: var(--danger); }
+.confirm__body { display: flex; gap: 14px; padding: 22px; }
+.confirm__title { font-size: var(--fs-title-2); }
+.confirm__foot { justify-content: flex-end; border: 0; padding-block-start: 0; }
+.confirm__msg { overflow-wrap: anywhere; }
+
+/* ---------- Popovers & menus (positioned by AM.popover; JS sets inline top/left) ---------- */
+.pop { position: fixed; margin: 0; overflow: auto; overscroll-behavior: contain; opacity: 0; transform: scale(.98);
+  transition: opacity var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out); }
+.pop.is-open { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .pop { transform: none; } }
+.menu__text { flex: 1; min-inline-size: 0; }
+.menu__main { color: var(--text); font-weight: var(--fw-semibold); font-size: var(--fs-body); }
+.menu__item .menu__sub { flex: 1; min-inline-size: 0; }
+.menu__item .menu__check { inline-size: 18px; block-size: 18px; flex: none; }
+.menu__item:disabled { opacity: .5; }
+
+/* Display menu */
+.display-menu .field__label { color: var(--text); }
+
+/* Language list (popover on desktop, sheet on phones/tablets) */
+.lang-menu .search { margin-block-end: 6px; }
+.lang-menu .search .input { min-block-size: 40px; }
+.lang-menu__list .menu__item--auto { grid-column: 1 / -1; }
+.lang-menu__list .menu__item > .icon:first-child { color: var(--text-2); }
+.lang-menu__empty { padding: 16px 10px; color: var(--text-3); font-size: var(--fs-small); }
+#sheet-lang .lang-menu__list { max-block-size: none; overflow: visible; }
+#sheet-lang .sheet__body { padding-block-start: 12px; }
+
+/* ---------- Tooltip ---------- */
+.tooltip { opacity: 0; transition: opacity var(--dur-1) var(--ease-out); }
+.tooltip.is-open { opacity: 1; }
+.tooltip .kbd { display: inline-grid; }
+
+/* ---------- Toasts ---------- */
+.toast { opacity: 0; transform: translateY(12px); transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out); }
+.toast.is-open { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .toast { transform: none; } }
+html[data-selecting] .toast-region { inset-block-end: calc(84px + var(--safe-bottom)); }
+@media (max-width: 720px) {
+  .toast-region { inset-block-end: calc(var(--dock-h) + 16px + var(--safe-bottom)); padding-inline: 12px; }
+  html[data-selecting] .toast-region { inset-block-end: calc(var(--dock-h) + 80px + var(--safe-bottom)); }
+  html.am-locked .toast-region { inset-block-end: calc(88px + var(--safe-bottom)); }
+}
+
+/* ---------- App bar details ---------- */
+.brand { background: none; border: 0; padding: 0; cursor: pointer; font: inherit; }
+.brand:focus-visible { outline-offset: 4px; }
+.brand__mark { flex: none; }
+.appbar__actions .icon-btn .badge--dot, .dock__item .badge--dot { position: absolute; }
+.appbar__actions .icon-btn .badge--dot { inset-block-start: 6px; inset-inline-end: 6px; }
+.search__end .badge { position: absolute; inset-block-start: -2px; inset-inline-end: -2px; }
+.search__end .icon-btn { position: relative; }
+.search .input::-webkit-search-cancel-button { cursor: pointer; }
+.lang-btn[aria-expanded="true"], .icon-btn[aria-expanded="true"] { background: var(--surface-3); color: var(--text); }
+
+/* Sidebar: backup card is a button */
+button.backup-card { inline-size: 100%; text-align: start; cursor: pointer; }
+button.backup-card:hover { border-color: var(--line-2); }
+.backup-card--off b { color: var(--text-2); }
+.backup-card--off b::before { background: var(--text-3); box-shadow: 0 0 0 3px var(--surface-3); }
+.nav-categories { display: grid; gap: 2px; }
+
+/* ---------- Category glyph fallbacks (letter until the MDI font loads; font glyph) ---------- */
+.cat-mark__letter { font-weight: var(--fw-bold); font-size: calc(var(--cm, 28px) * .5); line-height: 1; }
+.cat-mark .mdi, .icon-grid .mdi { font-size: calc(var(--cm, 28px) * .62); line-height: 1; display: inline-block; }
+.icon-grid .mdi { font-size: 22px; }
+.icon-grid .cat-mark__letter { font-size: 15px; }
+.icon-picker { display: grid; gap: 10px; }
+.icon-picker__search .input { min-block-size: 42px; }
+.icon-picker__empty { font-size: var(--fs-small); }
+
+/* ---------- More sheet (phone dock / tablet ⋮) ---------- */
+#sheet-more { --sheet-w: 420px; }
+#sheet-more .sheet__body { padding: 14px 14px 10px; }
+.more-item { color: var(--text); }
+.more-item .badge { flex: none; }
+.more-item .switch { flex: none; }
+.more-item__dot { color: var(--ok); }
+.more-item__dot--off { color: var(--text-3); }
+.more-section { padding-inline: 10px; }
+
+/* ---------- Category manager ---------- */
+.cat-list { display: grid; }
+.cat-list .list-row { grid-template-columns: auto minmax(0, 1fr) auto; }
+.cat-list__empty { color: var(--text-3); padding-block: 12px; }
+
+/* ---------- Keyboard shortcuts dialog ---------- */
+.shortcuts { display: grid; gap: 18px; }
+.shortcuts__group { display: grid; gap: 4px; }
+.shortcuts__row { display: flex; align-items: center; gap: 12px; min-block-size: 34px; border-block-end: 1px solid var(--line); }
+.shortcuts__row:last-child { border-block-end: 0; }
+.shortcuts__row > span:first-child { flex: 1; min-inline-size: 0; color: var(--text-2); }
+.shortcuts__keys { display: inline-flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.shortcuts__keys .kbd { display: inline-grid; }
+
+/* ---------- Empty states shells ---------- */
+.empty .link-btn { margin-block-start: 4px; }
+
+/* ---------- Print: the Labels view only, 3 per row, no chrome ---------- */
+@media print {
+  @page { margin: 12mm; }
+  html, body { background: #fff !important; color: #000 !important; }
+  .appbar, .sidebar, .insight, .insight-thin, .cat-row, .viewbar, .filters, .dock, .selbar, .toast-region,
+  #layers, #popovers, .backdrop, .skip-link, #view-cards, #view-table, .empty, #view-loading, .load-error,
+  .label-caption .icon-btn, .label-caption .btn { display: none !important; }
+  .shell { display: block; }
+  .main { padding: 0; display: block; max-inline-size: none; }
+  #view-labels { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 10mm 8mm; padding: 0; border: 0; background: none; }
+  /* A fixed physical width (3 across A4/Letter): the label type sizes are calc(var(--label-w) * k), so a % would collapse them. */
+  .label { --label-w: 56mm !important; break-inside: avoid; }
+  .label__face { box-shadow: 0 0 0 .3mm #bbb !important; }
+  .label__back { display: none; }
+  .label[data-flipped="true"] .label__card { transform: none; }
+}
+
+/* ---------- Skeleton card (first load only) ---------- */
+.skel-card { grid-template-columns: auto minmax(0, 1fr); }
+.skel-card::before { display: none; }
+.skel-card__tile { inline-size: 148px; block-size: 184px; border-radius: var(--r-qr); }
+.skel-card__body { display: grid; gap: 10px; align-content: start; padding-block: 6px; }
+.skel-card__pill { inline-size: 75%; block-size: 34px; border-radius: 10px; margin-block-start: 8px; }
+@media (prefers-reduced-motion: reduce) { .skel::after { animation: none; display: none; } }
+@media (max-width: 380px) { .skel-card__tile { inline-size: 132px; block-size: 172px; } }
+
+/* ---------- Sheet head variant ---------- */
+.sheet__head--center { align-items: center; }

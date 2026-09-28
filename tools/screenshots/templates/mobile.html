@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en" data-theme="dark"><head><meta charset="utf-8"><title>mobile</title>
+<link rel="stylesheet" href="common.css"><script src="common.js"></script></head>
+<body><script>
+  // 1200 x 780: three phones (vault, scan result, detail).
+  const v = el("div", { class: "void" });
+  v.append(orbits(1200, 780, 600, 400, 1.2));
+  const [a, b, c] = DATA.shots;
+  document.body.append(v,
+    phone(a, { width: 300, tone: "light", x: 118, y: 92 }),
+    phone(b, { width: 318, tone: "black", x: 441, y: 52, z: 2 }),
+    phone(c, { width: 300, tone: "dark", x: 782, y: 92 }));
+  ready();
+</script></body></html>

@@ -85,7 +85,7 @@
     payload = (payload << 4n) | BigInt(reserved & 0xf);
     payload = (payload << 8n) | BigInt(categoryId & 0xff);
     payload = (payload << 4n) | BigInt(flag & 0xf);
-    payload = (payload << 27n) | BigInt(Number(password) & 0x7fffffff);
+    payload = (payload << 27n) | BigInt(Number(password) & 0x7ffffff);
     const base36 = toBase36Upper(payload, 9);
     return `X-HM://${base36}${normalizeSetupId(setupId)}`;
   }
@@ -109,7 +109,8 @@
       if (idx < 0) return {};
       n = n * 36n + BigInt(idx);
     }
-    const password = Number(n & 0x7fffffffn);
+    // Setup code is the low 27 bits; bits 27-30 are the flags.
+    const password = Number(n & 0x7ffffffn);
     let rest = Number(n >> 27n);
     const flag = rest & 0xf;
     rest >>= 4;
@@ -143,7 +144,7 @@
       if (idx < 0) return "";
       n = n * 36n + BigInt(idx);
     }
-    const password = Number(n & 0x7fffffffn);
+    const password = Number(n & 0x7ffffffn);
     return String(password).padStart(8, "0").slice(-8);
   }
 

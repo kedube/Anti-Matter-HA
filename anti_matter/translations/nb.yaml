@@ -1,0 +1,23 @@
+configuration:
+  interface:
+    name: Grensesnitt
+    fields:
+      language:
+        name: Språk
+        description: >-
+          Språket i appen. «Auto» følger språket i Home Assistant og deretter
+          nettleserens språk. Hvert språk står oppført med sitt eget navn. Et språk som
+          velges direkte i appen, huskes per nettleser og går foran denne innstillingen.
+      theme:
+        name: Tema
+        description: >-
+          Fargetema: «Light» (lyst) eller «Dark» (mørkt). «Auto» følger innstillingen
+          for lyst/mørkt tema i Home Assistant.
+  backup:
+    name: Sikkerhetskopi
+    fields:
+      keep_count:
+        name: Antall sikkerhetskopier som beholdes
+        description: >-
+          Hvor mange tidsstemplede sikkerhetskopier som beholdes i konfigurasjonsmappen
+          til tillegget (tilgjengelig via SAMBA). Eldre kopier slettes automatisk.

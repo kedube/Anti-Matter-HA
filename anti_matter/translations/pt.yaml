@@ -1,0 +1,25 @@
+configuration:
+  interface:
+    name: Interface
+    fields:
+      language:
+        name: Idioma
+        description: >-
+          Idioma da aplicação. «Auto» segue o idioma do Home Assistant e, depois, o do
+          navegador. Cada idioma é apresentado com o seu próprio nome. Um idioma
+          escolhido na própria aplicação fica guardado em cada navegador e tem
+          prioridade sobre esta definição.
+      theme:
+        name: Tema
+        description: >-
+          Tema de cores: «Light» (claro) ou «Dark» (escuro). «Auto» segue a definição de
+          modo claro/escuro do Home Assistant.
+  backup:
+    name: Cópia de segurança
+    fields:
+      keep_count:
+        name: Cópias de segurança a manter
+        description: >-
+          Quantas cópias de segurança com data e hora manter na pasta de configuração do
+          suplemento (acessível por SAMBA). As mais antigas são eliminadas
+          automaticamente.

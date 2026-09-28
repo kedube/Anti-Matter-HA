@@ -80,7 +80,9 @@
       else if (total - i === 2) charsInChunk = 2;
       let value = 0;
       for (let j = i + charsInChunk - 1; j >= i; j--) {
-        value = value * BASE38_RADIX + BASE38_CODES.indexOf(encoded[j]);
+        const code = BASE38_CODES.indexOf(encoded[j]);
+        if (code < 0) throw new Error("Invalid base38 character");
+        value = value * BASE38_RADIX + code;
       }
       const bytesInChunk = BASE38_CHARS_NEEDED.indexOf(charsInChunk) + 1;
       for (let k = 0; k < bytesInChunk; k++) {
@@ -139,7 +141,11 @@
   function parseQrPayload(payload) {
     const raw = payload.trim();
     if (!raw.toUpperCase().startsWith("MT:")) throw new Error("Not MT:");
-    const decoded = base38Decode(raw.slice(3)).reverse();
+    // "MT:<p1>*<p2>..." bundles several devices; parse the first. Bytes past the
+    // fixed 11-byte base payload are optional TLV data, so only those are reversed.
+    const data = base38Decode(raw.slice(3).split("*")[0]);
+    if (data.length < 11) throw new Error("MT: payload too short");
+    const decoded = data.slice(0, 11).reverse();
     const f = readFields(decoded, QR_SPEC);
     return {
       pincode: f.pincode,
@@ -278,10 +284,16 @@
 
     const manualRaw = generateManualCode(parsed);
     let qrOut = "";
-    try {
-      qrOut = generateQrPayload(parsed);
-    } catch {
-      qrOut = qrPayload && String(qrPayload).toUpperCase().startsWith("MT:") ? qrPayload.trim() : "";
+    if (parsed.long_discriminator != null && qrIn.toUpperCase().startsWith("MT:")) {
+      // Keep the scanned string verbatim: regenerating would drop TLV data and extra
+      // "*" device payloads, producing a QR that no longer matches the label.
+      qrOut = "MT:" + qrIn.slice(3);
+    } else {
+      try {
+        qrOut = generateQrPayload(parsed);
+      } catch {
+        qrOut = qrPayload && String(qrPayload).toUpperCase().startsWith("MT:") ? qrPayload.trim() : "";
+      }
     }
     return { manual_code: formatManualDisplay(manualRaw), qr_payload: qrOut };
   }

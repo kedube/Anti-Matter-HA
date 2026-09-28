@@ -3,6 +3,6 @@ build_from:
   amd64: ghcr.io/home-assistant/amd64-base-python:3.12-alpine3.20
 labels:
   org.opencontainers.image.title: "Anti-Matter"
-  org.opencontainers.image.description: "Store and back up Matter, HomeKit and Z-Wave pairing codes for Home Assistant"
+  org.opencontainers.image.description: "Local vault and offline scanner for Matter, HomeKit, Z-Wave, Zigbee and Tuya pairing codes in Home Assistant"
   org.opencontainers.image.source: "https://github.com/Cl3tus/Anti-Matter-HA"
   org.opencontainers.image.licenses: "MIT"

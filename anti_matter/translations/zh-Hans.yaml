@@ -1,0 +1,19 @@
+configuration:
+  interface:
+    name: 界面
+    fields:
+      language:
+        name: 语言
+        description: >-
+          应用的显示语言。“Auto”会跟随 Home Assistant 的语言，其次跟随浏览器语言。各语言均以其本身的名称列出。在应用内直接选择的语言会按浏览器分别保存，并优先于此设置。
+      theme:
+        name: 主题
+        description: >-
+          配色主题：“Light”（浅色）或“Dark”（深色）。“Auto”会跟随 Home Assistant 的浅色/深色设置。
+  backup:
+    name: 备份
+    fields:
+      keep_count:
+        name: 保留的备份数量
+        description: >-
+          在加载项配置文件夹（可通过 SAMBA 访问）中保留的带时间戳备份副本数量。较旧的备份会被自动删除。

@@ -1,0 +1,428 @@
+{
+  "meta": {
+    "version": 1,
+    "exported_at": null,
+    "addon_version": "3.0.0",
+    "source": null,
+    "deletions": {
+      "codes": {},
+      "categories": {}
+    }
+  },
+  "categories": [
+    {
+      "id": "736dbc98-2b19-57c9-be03-281fde2cc92e",
+      "name": "Lights",
+      "color": "#F59E0B",
+      "icon": "lightbulb",
+      "sort_order": 0,
+      "deleted_at": null
+    },
+    {
+      "id": "89c95291-aabd-545b-8458-5d7cf06f2265",
+      "name": "Sensors",
+      "color": "#10B981",
+      "icon": "thermometer",
+      "sort_order": 1,
+      "deleted_at": null
+    },
+    {
+      "id": "011e8451-6260-5739-8b30-643863a4eae8",
+      "name": "Security",
+      "color": "#EF4444",
+      "icon": "lock",
+      "sort_order": 2,
+      "deleted_at": null
+    },
+    {
+      "id": "cf0aa7a0-082a-5b60-b63c-8835a60bfe64",
+      "name": "Climate",
+      "color": "#3B82F6",
+      "icon": "hvac",
+      "sort_order": 3,
+      "deleted_at": null
+    },
+    {
+      "id": "c2c18293-09d3-5832-932b-114b0d533953",
+      "name": "Plugs & Switches",
+      "color": "#8B5CF6",
+      "icon": "power-plug",
+      "sort_order": 4,
+      "deleted_at": null
+    },
+    {
+      "id": "3d770d31-0813-5a8a-a4a7-80591b39baba",
+      "name": "Spares",
+      "color": "#64748B",
+      "icon": "package-variant-closed",
+      "sort_order": 5,
+      "deleted_at": null
+    }
+  ],
+  "codes": [
+    {
+      "id": "18d73536-19a9-529b-b13c-c45e56b8fe0b",
+      "name": "Living room floor lamp",
+      "code_type": "matter",
+      "device_type": "light",
+      "device_vendor": "IKEA of Sweden",
+      "device_product": "VARMBLIXT",
+      "area": "Living Room",
+      "description": "Thread, next to the sofa",
+      "category_ids": [
+        "736dbc98-2b19-57c9-be03-281fde2cc92e"
+      ],
+      "manual_code": "2287-584-2364",
+      "qr_payload": "MT:63K14WUV01CPH13SH10",
+      "custom_standard": "",
+      "setup_id": "",
+      "homekit_category": "other",
+      "homekit_flag": 2,
+      "zwave_pin": "",
+      "notes": "",
+      "in_use": true,
+      "conn_wifi": false,
+      "conn_matter": true,
+      "conn_zigbee": false,
+      "conn_bluetooth": false,
+      "conn_zwave": false,
+      "ha_link": {
+        "device_id": "bed6a9e9d5b514c82fdf327fbc57867e"
+      },
+      "created_at": "2026-03-17T09:00:00Z",
+      "updated_at": "2026-03-19T09:00:00Z",
+      "deleted_at": null
+    },
+    {
+      "id": "7d970b4c-16fc-5556-b695-ac7380e9f352",
+      "name": "Hallway motion sensor",
+      "code_type": "matter",
+      "device_type": "motion_sensor",
+      "device_vendor": "Aqara",
+      "device_product": "Motion and Light Sensor P2",
+      "area": "Hallway",
+      "description": "",
+      "category_ids": [
+        "89c95291-aabd-545b-8458-5d7cf06f2265"
+      ],
+      "manual_code": "1176-191-6499",
+      "qr_payload": "MT:EXBT0IJ112DBFC4QL00",
+      "custom_standard": "",
+      "setup_id": "",
+      "homekit_category": "other",
+      "homekit_flag": 2,
+      "zwave_pin": "",
+      "notes": "",
+      "in_use": true,
+      "conn_wifi": false,
+      "conn_matter": true,
+      "conn_zigbee": false,
+      "conn_bluetooth": false,
+      "conn_zwave": false,
+      "ha_link": {
+        "device_id": null
+      },
+      "created_at": "2026-04-23T09:00:00Z",
+      "updated_at": "2026-04-25T09:00:00Z",
+      "deleted_at": null
+    },
+    {
+      "id": "0a95a20c-9367-57fa-b1b1-bdc53737b49a",
+      "name": "Office smart plug",
+      "code_type": "matter",
+      "device_type": "plug",
+      "device_vendor": "Eve Systems",
+      "device_product": "Eve Energy",
+      "area": "Office",
+      "description": "",
+      "category_ids": [
+        "c2c18293-09d3-5832-932b-114b0d533953"
+      ],
+      "manual_code": "3445-903-1362",
+      "qr_payload": "MT:-AM14ONY16R1CY2A310",
+      "custom_standard": "",
+      "setup_id": "",
+      "homekit_category": "other",
+      "homekit_flag": 2,
+      "zwave_pin": "",
+      "notes": "",
+      "in_use": true,
+      "conn_wifi": false,
+      "conn_matter": true,
+      "conn_zigbee": false,
+      "conn_bluetooth": true,
+      "conn_zwave": false,
+      "ha_link": {
+        "device_id": null
+      },
+      "created_at": "2026-05-27T09:00:00Z",
+      "updated_at": "2026-05-29T09:00:00Z",
+      "deleted_at": null
+    },
+    {
+      "id": "3f64482f-2c92-555b-99ac-0352aa82b1c8",
+      "name": "Bedroom thermostat",
+      "code_type": "homekit",
+      "device_type": "thermostat",
+      "device_vendor": "ecobee",
+      "device_product": "Smart Thermostat Premium",
+      "area": "Bedroom",
+      "description": "",
+      "category_ids": [
+        "cf0aa7a0-082a-5b60-b63c-8835a60bfe64"
+      ],
+      "manual_code": "031-45-154",
+      "qr_payload": "X-HM://00904P5TU7HQ2",
+      "custom_standard": "",
+      "setup_id": "7HQ2",
+      "homekit_category": "thermostat",
+      "homekit_flag": 2,
+      "zwave_pin": "",
+      "notes": "",
+      "in_use": true,
+      "conn_wifi": true,
+      "conn_matter": false,
+      "conn_zigbee": false,
+      "conn_bluetooth": false,
+      "conn_zwave": false,
+      "ha_link": {
+        "device_id": "d3e2fb619e0ea70cf6ffa142efec5ced"
+      },
+      "created_at": "2026-06-05T09:00:00Z",
+      "updated_at": "2026-06-07T09:00:00Z",
+      "deleted_at": null
+    },
+    {
+      "id": "9d9a463d-6a91-5c16-8852-f81d23fccdac",
+      "name": "Front door lock",
+      "code_type": "homekit",
+      "device_type": "lock",
+      "device_vendor": "Nuki",
+      "device_product": "Smart Lock Pro",
+      "area": "Entrance",
+      "description": "",
+      "category_ids": [
+        "011e8451-6260-5739-8b30-643863a4eae8"
+      ],
+      "manual_code": "482-13-607",
+      "qr_payload": "X-HM://0014R2WYVK3LP",
+      "custom_standard": "",
+      "setup_id": "K3LP",
+      "homekit_category": "lock",
+      "homekit_flag": 2,
+      "zwave_pin": "",
+      "notes": "",
+      "in_use": true,
+      "conn_wifi": false,
+      "conn_matter": true,
+      "conn_zigbee": false,
+      "conn_bluetooth": true,
+      "conn_zwave": false,
+      "ha_link": {
+        "device_id": "8bfdb0b91a7588bdabc0002ebd9a4270"
+      },
+      "created_at": "2026-06-18T09:00:00Z",
+      "updated_at": "2026-06-20T09:00:00Z",
+      "deleted_at": null
+    },
+    {
+      "id": "c2463dc6-8fd1-5c38-a886-601d7db8aaae",
+      "name": "Kitchen wall switch",
+      "code_type": "zwave",
+      "device_type": "switch",
+      "device_vendor": "Fibaro",
+      "device_product": "Walli Switch",
+      "area": "Kitchen",
+      "description": "",
+      "category_ids": [
+        "c2c18293-09d3-5832-932b-114b0d533953"
+      ],
+      "manual_code": "",
+      "qr_payload": "900104049135502851204544321098763312005421612340778800100409701792022000271015380409700258080201",
+      "custom_standard": "",
+      "setup_id": "",
+      "homekit_category": "other",
+      "homekit_flag": 2,
+      "zwave_pin": "50285",
+      "notes": "",
+      "in_use": true,
+      "conn_wifi": false,
+      "conn_matter": false,
+      "conn_zigbee": false,
+      "conn_bluetooth": false,
+      "conn_zwave": true,
+      "ha_link": {
+        "device_id": "84701131c16982cfeca037a07dc10344"
+      },
+      "created_at": "2026-07-02T09:00:00Z",
+      "updated_at": "2026-07-04T09:00:00Z",
+      "deleted_at": null
+    },
+    {
+      "id": "66c94bdc-634f-55b3-8d64-918d4b1c8d2d",
+      "name": "Garage door sensor",
+      "code_type": "zwave",
+      "device_type": "door_sensor",
+      "device_vendor": "Zooz",
+      "device_product": "ZSE41 Open/Close XS",
+      "area": "Garage",
+      "description": "",
+      "category_ids": [
+        "011e8451-6260-5739-8b30-643863a4eae8",
+        "89c95291-aabd-545b-8458-5d7cf06f2265"
+      ],
+      "manual_code": "",
+      "qr_payload": "900118014135118734002205610274316001203301199884502000100409701792022000634000020007200258080201",
+      "custom_standard": "",
+      "setup_id": "",
+      "homekit_category": "other",
+      "homekit_flag": 2,
+      "zwave_pin": "11873",
+      "notes": "",
+      "in_use": false,
+      "conn_wifi": false,
+      "conn_matter": false,
+      "conn_zigbee": false,
+      "conn_bluetooth": false,
+      "conn_zwave": true,
+      "ha_link": {
+        "device_id": null
+      },
+      "created_at": "2026-07-09T09:00:00Z",
+      "updated_at": "2026-07-11T09:00:00Z",
+      "deleted_at": null
+    },
+    {
+      "id": "4070499e-cc38-5d97-9d84-83798f269593",
+      "name": "Patio bulb",
+      "code_type": "other",
+      "device_type": "light",
+      "device_vendor": "Philips Hue",
+      "device_product": "White Ambiance E27",
+      "area": "Garden",
+      "description": "",
+      "category_ids": [
+        "736dbc98-2b19-57c9-be03-281fde2cc92e"
+      ],
+      "manual_code": "ZB-7F21-99A0",
+      "qr_payload": "Z:00158D0004A1B2C3$I:83FED3407A939723A5C639B26916D505",
+      "custom_standard": "Zigbee",
+      "setup_id": "",
+      "homekit_category": "other",
+      "homekit_flag": 2,
+      "zwave_pin": "",
+      "notes": "",
+      "in_use": true,
+      "conn_wifi": false,
+      "conn_matter": false,
+      "conn_zigbee": true,
+      "conn_bluetooth": false,
+      "conn_zwave": false,
+      "ha_link": {
+        "device_id": null
+      },
+      "created_at": "2026-07-23T09:00:00Z",
+      "updated_at": "2026-07-25T09:00:00Z",
+      "deleted_at": null
+    },
+    {
+      "id": "bbd7cda7-2f03-59e1-b8bc-46db6dbc0a51",
+      "name": "Desk LED strip",
+      "code_type": "other",
+      "device_type": "light",
+      "device_vendor": "Tuya",
+      "device_product": "RGBCW LED strip",
+      "area": "Office",
+      "description": "",
+      "category_ids": [
+        "736dbc98-2b19-57c9-be03-281fde2cc92e"
+      ],
+      "manual_code": "TY-4F82-K91Q",
+      "qr_payload": "https://smartapp.tuya.com/s/p?p=a8x2k&uuid=demo4f82k91q&v=2.0",
+      "custom_standard": "Tuya",
+      "setup_id": "",
+      "homekit_category": "other",
+      "homekit_flag": 2,
+      "zwave_pin": "",
+      "notes": "",
+      "in_use": false,
+      "conn_wifi": true,
+      "conn_matter": false,
+      "conn_zigbee": false,
+      "conn_bluetooth": false,
+      "conn_zwave": false,
+      "ha_link": {
+        "device_id": null
+      },
+      "created_at": "2026-08-06T09:00:00Z",
+      "updated_at": "2026-08-08T09:00:00Z",
+      "deleted_at": null
+    },
+    {
+      "id": "c759b2ca-738f-5796-8c2f-720a517a3848",
+      "name": "Nursery camera",
+      "code_type": "other",
+      "device_type": "camera",
+      "device_vendor": "Wyze",
+      "device_product": "Cam v3",
+      "area": "Nursery",
+      "description": "",
+      "category_ids": [
+        "011e8451-6260-5739-8b30-643863a4eae8"
+      ],
+      "manual_code": "WZ-3301-CAM",
+      "qr_payload": "WYZE-DEMO-3301-CAM-V3",
+      "custom_standard": "Wyze",
+      "setup_id": "",
+      "homekit_category": "other",
+      "homekit_flag": 2,
+      "zwave_pin": "",
+      "notes": "",
+      "in_use": true,
+      "conn_wifi": true,
+      "conn_matter": false,
+      "conn_zigbee": false,
+      "conn_bluetooth": false,
+      "conn_zwave": false,
+      "ha_link": {
+        "device_id": null
+      },
+      "created_at": "2026-08-17T09:00:00Z",
+      "updated_at": "2026-08-19T09:00:00Z",
+      "deleted_at": null
+    },
+    {
+      "id": "d60e163c-0e95-5522-8979-25458b57967c",
+      "name": "Spare contact sensor",
+      "code_type": "matter",
+      "device_type": "door_sensor",
+      "device_vendor": "Eve Systems",
+      "device_product": "Eve Door & Window",
+      "area": "",
+      "description": "",
+      "category_ids": [
+        "3d770d31-0813-5a8a-a4a7-80591b39baba"
+      ],
+      "manual_code": "2644-334-8988",
+      "qr_payload": "MT:U1ZA3M0V019HMS3HQ10",
+      "custom_standard": "",
+      "setup_id": "",
+      "homekit_category": "other",
+      "homekit_flag": 2,
+      "zwave_pin": "",
+      "notes": "Still boxed, top shelf of the hall cupboard",
+      "in_use": false,
+      "conn_wifi": false,
+      "conn_matter": true,
+      "conn_zigbee": false,
+      "conn_bluetooth": false,
+      "conn_zwave": false,
+      "ha_link": {
+        "device_id": null
+      },
+      "created_at": "2026-08-29T09:00:00Z",
+      "updated_at": "2026-08-31T09:00:00Z",
+      "deleted_at": null
+    }
+  ]
+}

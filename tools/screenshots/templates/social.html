@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" data-theme="dark"><head><meta charset="utf-8"><title>social</title>
+<link rel="stylesheet" href="common.css"><script src="common.js"></script>
+<style>
+  /* 1280 x 640 GitHub social preview. Keep the text inside the centre-safe area. */
+  .text { position: absolute; left: 76px; top: 150px; width: 560px; }
+  .mark { width: 92px; height: 92px; border-radius: 23px; overflow: hidden; box-shadow: 0 0 0 1px rgba(176, 162, 255, .35), 0 0 50px -4px rgba(124, 92, 255, .8); }
+  .mark img { width: 100%; height: 100%; display: block; }
+  .over { margin-top: 30px; font: 800 14px/1 var(--font-ui); letter-spacing: .16em; text-transform: uppercase; color: #5DE6F5; }
+  .word { margin-top: 12px; font: 300 76px/1 var(--font-ui); letter-spacing: -.04em; color: #BDB9E4; white-space: nowrap; }
+  .word b { font-weight: 800; color: #fff; }
+  .tagline { margin-top: 18px; font: 600 27px/1.28 var(--font-ui); color: #E4E1FA; letter-spacing: -.01em; }
+  .protos { margin-top: 30px; display: flex; align-items: center; gap: 20px; }
+  .protos img { display: block; filter: brightness(0) invert(1); opacity: .8; }
+  .protos .dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(176, 162, 255, .55); }
+  .stage { position: absolute; left: 690px; top: 70px; width: 900px; height: 562px; perspective: 1600px; }
+  .stage .window { position: absolute; inset: 0; transform: rotateY(-16deg) rotateX(5deg) rotateZ(-1deg); transform-origin: left center; }
+</style></head>
+<body><script>
+  const L = DATA.logos;
+  const v = el("div", { class: "void" });
+  v.append(orbits(1280, 640, 380, 330, 1.1));
+  const p = el("div", { class: "protos" });
+  [[L.matter, 20], [L.homekit, 21], [L.zwave, 25], [L.zigbee, 21], [L.tuya, 22]].forEach(([src, h], i) => {
+    if (i) p.append(el("span", { class: "dot" }));
+    p.append(el("img", { src, style: { height: h + "px" } }));
+  });
+  document.body.append(v,
+    el("div", { class: "stage" }, el("div", { class: "window" }, el("img", { class: "shot", src: DATA.app }))),
+    el("div", { class: "text" },
+      el("div", { class: "mark" }, el("img", { src: DATA.icon })),
+      el("div", { class: "over" }, "For Home Assistant"),
+      el("div", { class: "word" }, "Anti-", el("b", {}, "Matter")),
+      el("div", { class: "tagline" }, ...DATA.tagline.split(/ (?=for )/).flatMap((t, i) => (i ? [el("br"), t] : [t]))),
+      p));
+  ready();
+</script></body></html>

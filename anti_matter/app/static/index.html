@@ -1,523 +1,455 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="light" data-theme-mode="light">
+<!doctype html>
+<html lang="en" dir="ltr" class="am-booting">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#111111" media="(prefers-color-scheme: dark)" />
-  <title>Anti-Matter</title>
-  <link rel="icon" href="./static/assets/anti-matter-icon.png" type="image/png" />
-  <script src="./static/brand/js/theme.js?v=1.0.39"></script>
-  <link rel="stylesheet" href="./static/vendor/fonts.css?v=1.0.39" />
-  <link rel="stylesheet" href="./static/vendor/mdi/css/materialdesignicons.min.css?v=1.0.39" />
-  <link rel="stylesheet" href="./static/brand/css/tokens.css?v=1.0.39" />
-  <link rel="stylesheet" href="./static/brand/css/components.css?v=1.0.39" />
-  <link rel="stylesheet" href="./static/style.css?v=1.0.39" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F3F2FA">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="same-origin">
+<title>Anti-Matter</title>
+<link rel="icon" href="./static/assets/anti-matter-icon.png?v=3.0.0" type="image/png">
+<!-- Theme first, synchronous: sets <html data-theme> (and QR invert / RTL hints) before first paint -->
+<script src="./static/brand/js/theme.js?v=3.0.0"></script>
+<link rel="preload" href="./static/vendor/fonts/manrope-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="./static/vendor/fonts.css?v=3.0.0">
+<link rel="stylesheet" href="./static/css/tokens.css?v=3.0.0">
+<link rel="stylesheet" href="./static/css/base.css?v=3.0.0">
+<link rel="stylesheet" href="./static/css/components.css?v=3.0.0">
+<link rel="stylesheet" href="./static/css/layout.css?v=3.0.0">
+<link rel="stylesheet" href="./static/css/scanner.css?v=3.0.0">
+<link rel="stylesheet" href="./static/css/app.css?v=3.0.0">
+<!-- Module stylesheets: the vault screen (browse.js) and the detail/editor/dialog sheets. Scanner styles live in scanner.css. -->
+<link rel="stylesheet" href="./static/css/browse.css?v=3.0.0">
+<link rel="stylesheet" href="./static/css/sheets.css?v=3.0.0">
 </head>
 <body>
-  <header class="header">
-    <div class="brand-block">
-      <img class="brand-logo" src="./static/assets/anti-matter-icon.png" alt="" width="40" height="40" />
-      <h1>Anti-Matter</h1>
-      <span id="app-version" class="app-version"></span>
+<div id="app" class="app">
+  <a class="skip-link" href="#main" data-i18n="app.skip_to_codes">Skip to codes</a>
+  <div class="backdrop" aria-hidden="true"></div>
+
+  <!-- ============================== App bar ============================== -->
+  <header class="appbar" id="appbar">
+    <button type="button" class="brand appbar__brand" id="brand" data-i18n-aria-label="app.home">
+      <img class="brand__mark" src="./static/assets/anti-matter-icon.png?v=3.0.0" alt="" width="36" height="36">
+      <span class="brand__name" dir="ltr"><span class="anti">Anti-</span><span class="matter">Matter</span></span>
+      <span class="brand__ver not-phone" id="app-version" dir="ltr" hidden></span>
+    </button>
+    <div class="appbar__search search" role="search">
+      <svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-search"/></svg>
+      <input class="input" id="search" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search" dir="auto"
+        data-i18n-placeholder="search.placeholder" data-i18n-aria-label="search.label" placeholder="Search name, vendor, area, code…" aria-label="Search codes">
+      <span class="kbd not-phone" aria-hidden="true">/</span>
+      <span class="search__end only-phone">
+        <button type="button" class="icon-btn icon-btn--sm" id="btn-filters" aria-haspopup="dialog" aria-controls="sheet-filters" data-i18n-tip="filter.title"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-sliders-horizontal"/></svg><span class="badge" id="filters-badge" hidden></span></button>
+      </span>
     </div>
-    <div class="header-actions">
-      <button type="button" id="btn-export" class="rm-btn rm-btn-secondary" data-i18n-tip="action.export">
-        <span class="btn-icon-emoji" aria-hidden="true">📤</span> <span data-i18n="action.export">Export</span>
-      </button>
-      <label class="rm-btn rm-btn-secondary file-label" data-i18n-tip="action.import">
-        <span class="btn-icon-emoji" aria-hidden="true">📥</span> <span data-i18n="action.import">Import</span>
-        <input type="file" id="import-file" accept="application/json,.json" hidden />
-      </label>
-      <button type="button" id="btn-qr-invert" class="rm-btn rm-btn-secondary" data-i18n-tip="action.qr_invert" aria-pressed="false">
-        <span id="btn-qr-invert-icon" aria-hidden="true"><svg class="rm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="./static/brand/icons.svg#rm-icon-qr"/></svg></span> <span data-i18n="action.qr_invert_label">Invert</span>
-      </button>
-      <button type="button" id="btn-backup" class="rm-btn rm-btn-secondary" data-i18n-tip="backup.title">
-        <span aria-hidden="true">💾</span> <span data-i18n="action.backup_menu">Backup</span>
-      </button>
-      <button type="button" id="btn-trash" class="rm-btn rm-btn-secondary" data-i18n-tip="trash.title">
-        <img id="btn-trash-icon" src="./static/assets/recyclebin.png" alt="" width="18" height="18" /> <span data-i18n="trash.title">Trash</span>
-      </button>
-      <button type="button" id="btn-scan-code" class="rm-btn rm-btn-primary" data-i18n-tip="scan.title">
-        <span aria-hidden="true">⛶</span> <span data-i18n="action.scan_code">Scan</span>
-      </button>
-      <button type="button" id="btn-add-code" class="rm-btn rm-btn-primary" data-i18n-tip="code.add_manual_title">
-        <span class="plus-glyph" aria-hidden="true">+</span> <span data-i18n="action.add_code">New</span>
-      </button>
-      <span class="header-sep" aria-hidden="true"></span>
-      <div class="header-lang-theme">
-        <button type="button" id="btn-theme" class="rm-btn rm-btn-secondary" data-i18n-tip="theme.title">
-          <span id="btn-theme-icon" aria-hidden="true">
-            <svg class="yny" viewBox="0 0 100 100" aria-hidden="true">
-              <circle cx="50" cy="50" r="47" fill="#e8ebf1" stroke="currentColor" stroke-width="2.5" stroke-opacity=".5"/>
-              <path d="M50,3 a47,47 0 0,1 0,94 a23.5,23.5 0 0,1 0,-47 a23.5,23.5 0 0,0 0,-47z" fill="#3a3f47"/>
-              <circle cx="50" cy="26.5" r="6" fill="#e8ebf1"/>
-              <circle cx="50" cy="73.5" r="6" fill="#3a3f47"/>
-            </svg>
-          </span>
-          <span id="btn-theme-label" data-i18n="theme.light">Light</span>
-        </button>
-        <button type="button" id="btn-lang" class="rm-btn rm-btn-secondary" data-i18n-tip="lang.label">
-          <span id="btn-lang-flag" aria-hidden="true"></span>
-          <span id="btn-lang-label">EN</span>
-        </button>
-      </div>
+    <div class="appbar__actions">
+      <button type="button" class="icon-btn only-phone" id="btn-select-phone" aria-pressed="false" data-i18n-tip="action.select"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-list-checks"/></svg></button>
+      <button type="button" class="icon-btn only-desktop" id="btn-display" aria-haspopup="dialog" aria-expanded="false" aria-controls="menu-display" data-i18n-tip="display.title"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-sun-moon"/></svg></button>
+      <button type="button" class="lang-btn only-desktop" id="btn-language" aria-haspopup="menu" aria-expanded="false" aria-controls="menu-lang" data-lang-menu data-i18n-tip="lang.label"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-languages"/></svg><span id="lang-code" dir="ltr">EN</span></button>
+      <span class="vsep only-desktop" aria-hidden="true"></span>
+      <button type="button" class="icon-btn icon-btn--outline only-tablet-down not-phone" id="btn-more" aria-haspopup="dialog" aria-controls="sheet-more" data-i18n-tip="nav.more_tools"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-ellipsis-vertical"/></svg><span class="badge badge--dot" id="more-dot" hidden></span></button>
+      <button type="button" class="btn not-phone" id="btn-new"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-plus"/></svg><span data-i18n="action.new_code">New code</span><span class="kbd" aria-hidden="true">N</span></button>
+      <button type="button" class="btn btn--hero not-phone" id="btn-scan"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-scan-line"/></svg><span data-i18n="action.scan">Scan</span><span class="kbd" aria-hidden="true">S</span></button>
+      <button type="button" class="icon-btn only-phone" id="btn-display-phone" aria-haspopup="dialog" aria-expanded="false" aria-controls="menu-display" data-i18n-tip="display.title"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-sun-moon"/></svg></button>
     </div>
   </header>
 
-  <main class="layout">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-head">
-        <button type="button" id="btn-toggle-sidebar" class="sidebar-toggle" aria-expanded="false" aria-controls="sidebar-body" data-i18n-tip="categories.toggle">
-          <h2 data-i18n="categories.title">Categories</h2>
-          <i class="mdi mdi-chevron-down sidebar-toggle-icon" aria-hidden="true"></i>
-        </button>
-        <button type="button" id="btn-add-category" class="btn icon" data-i18n-tip="categories.add_title">
-          <svg class="rm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="./static/brand/icons.svg#rm-icon-plus"/></svg>
-        </button>
+  <div class="shell">
+    <!-- ============================== Sidebar (≥1024) ============================== -->
+    <nav class="sidebar" id="sidebar" data-i18n-aria-label="nav.categories" aria-label="Categories">
+      <button type="button" class="nav-item" id="nav-all" aria-pressed="true"><span class="glyph glyph--all"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-layers"/></svg></span><span class="nav-item__label" data-i18n="nav.all_codes">All codes</span><span class="nav-item__n" id="nav-all-n"></span></button>
+      <button type="button" class="nav-item" id="nav-uncat" aria-pressed="false"><span class="glyph"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-tag"/></svg></span><span class="nav-item__label" data-i18n="nav.uncategorized">Uncategorized</span><span class="nav-item__n" id="nav-uncat-n"></span></button>
+      <div class="sidebar__section"><span class="overline" data-i18n="nav.categories">Categories</span><button type="button" class="icon-btn icon-btn--xs" id="btn-new-category" data-i18n-tip="categories.dialog_new"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-plus"/></svg></button></div>
+      <div class="nav-categories" id="nav-categories"><!-- browse.js: .nav-row > .nav-item + .nav-more --></div>
+      <div class="sidebar__foot">
+        <button type="button" class="backup-card" id="backup-card" hidden><b id="backup-card-title"></b><span id="backup-card-desc"></span></button>
+        <button type="button" class="nav-item" id="nav-trash" aria-haspopup="dialog"><span class="glyph"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-trash-2"/></svg></span><span class="nav-item__label" data-i18n="nav.trash">Trash</span><span class="badge badge--neutral" id="nav-trash-n" hidden></span></button>
+        <button type="button" class="nav-item" id="nav-backups" aria-haspopup="dialog"><span class="glyph"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-database-backup"/></svg></span><span class="nav-item__label" data-i18n="nav.backups">Backups</span><span class="nav-item__n" id="nav-backups-freq"></span></button>
+        <button type="button" class="nav-item" id="nav-io" aria-haspopup="dialog"><span class="glyph"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-arrow-up-down"/></svg></span><span class="nav-item__label" data-i18n="nav.import_export">Import &amp; export</span></button>
       </div>
-      <div id="sidebar-body" class="sidebar-body">
-        <button type="button" id="filter-all" class="filter-all active" data-i18n="categories.filter_all">All categories</button>
-        <ul id="category-list" class="category-list"></ul>
-      </div>
-    </aside>
+    </nav>
 
-    <section class="content">
-      <div class="toolbar">
-        <input type="search" id="search" data-i18n-placeholder="search.placeholder" placeholder="Search by name, type, or code…" />
-        <div class="attr-filters">
-          <div class="filter-dropdown" id="filter-protocol-dropdown">
-            <button type="button" id="filter-protocol-toggle" class="filter-dropdown-toggle" data-i18n="code.protocol">Protocol</button>
-            <div id="filter-protocol-panel" class="filter-dropdown-panel hidden"></div>
-          </div>
-          <div class="filter-dropdown" id="filter-vendor-dropdown">
-            <button type="button" id="filter-vendor-toggle" class="filter-dropdown-toggle" data-i18n="filter.vendor">Vendor</button>
-            <div id="filter-vendor-panel" class="filter-dropdown-panel hidden"></div>
-          </div>
-          <div class="filter-dropdown" id="filter-product-dropdown">
-            <button type="button" id="filter-product-toggle" class="filter-dropdown-toggle" data-i18n="filter.product">Product</button>
-            <div id="filter-product-panel" class="filter-dropdown-panel hidden"></div>
-          </div>
-          <div class="filter-dropdown" id="filter-type-dropdown">
-            <button type="button" id="filter-type-toggle" class="filter-dropdown-toggle" data-i18n="filter.type">Type</button>
-            <div id="filter-type-panel" class="filter-dropdown-panel hidden"></div>
-          </div>
-          <div class="filter-dropdown" id="filter-area-dropdown">
-            <button type="button" id="filter-area-toggle" class="filter-dropdown-toggle" data-i18n="filter.area">Area</button>
-            <div id="filter-area-panel" class="filter-dropdown-panel hidden"></div>
-          </div>
-          <div class="filter-dropdown" id="filter-in-use-dropdown">
-            <button type="button" id="filter-in-use-toggle" class="filter-dropdown-toggle" data-i18n="code.in_use">In use</button>
-            <div id="filter-in-use-panel" class="filter-dropdown-panel hidden"></div>
-          </div>
-          <div class="filter-dropdown" id="filter-conn-dropdown">
-            <button type="button" id="filter-conn-toggle" class="filter-dropdown-toggle" data-i18n="code.connectivity">Connectivity</button>
-            <div id="filter-conn-panel" class="filter-dropdown-panel hidden"></div>
-          </div>
-          <button type="button" id="btn-clear-filters" class="filter-dropdown-toggle" data-i18n="filter.clear">Clear filters</button>
-          <div id="code-selection-bar" class="selection-bar inline hidden">
-            <span id="code-selection-count"></span>
-            <button type="button" id="btn-delete-selected-codes" class="rm-btn rm-btn-danger" data-i18n="action.delete_selected">Delete selected</button>
-            <button type="button" id="btn-clear-code-selection" class="rm-btn rm-btn-secondary" data-i18n="action.clear_selection">Clear</button>
-          </div>
+    <!-- ============================== Main ============================== -->
+    <main class="main" id="main" tabindex="-1">
+      <section class="insight" id="insight" data-i18n-aria-label="insight.summary" aria-label="Vault summary" hidden><!-- browse.js --></section>
+      <div class="cat-row" id="cat-row" role="toolbar" data-i18n-aria-label="nav.categories" aria-label="Categories"><!-- browse.js: .chip.chip--lg … + trailing manage ⋯ --></div>
+      <section class="insight-thin only-phone" id="insight-thin" data-i18n-aria-label="insight.summary" aria-label="Vault summary" hidden><!-- browse.js --></section>
+
+      <div class="viewbar" id="viewbar">
+        <div class="viewbar__title">
+          <h1 id="view-title" dir="auto">All codes</h1>
+          <span class="viewbar__status" id="view-status" role="status" aria-live="polite"></span>
         </div>
-      </div>
-      <div id="codes-grid" class="codes-grid"></div>
-      <div id="codes-table-view" class="table-view hidden">
-        <div class="table-scroll">
-          <table id="codes-table">
-            <thead>
-              <tr>
-                <th data-sort-key="name" data-i18n="code.name">Name</th>
-                <th data-sort-key="protocol" data-i18n="code.protocol">Protocol</th>
-                <th data-sort-key="device_vendor" data-i18n="code.device_vendor">Device vendor</th>
-                <th data-sort-key="device_product" data-i18n="code.device_product">Device product name</th>
-                <th data-sort-key="device_type" data-i18n="code.device_type">Device type</th>
-                <th data-sort-key="area" data-i18n="code.area">Area</th>
-                <th data-sort-key="categories" data-i18n="categories.title">Categories</th>
-                <th data-sort-key="in_use" data-i18n="code.in_use">In use</th>
-                <th data-sort-key="connectivity" data-i18n="code.connectivity">Connectivity</th>
-                <th data-sort-key="added_at" data-i18n="code.added_at">Added</th>
-                <th class="table-actions-col"></th>
-              </tr>
-            </thead>
-            <tbody id="codes-table-body"></tbody>
-          </table>
+        <button type="button" class="btn btn--ghost btn--sm not-phone" id="btn-select" aria-pressed="false"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-list-checks"/></svg><span data-i18n="action.select">Select</span></button>
+        <div class="seg seg--icons-phone" id="view-switch" role="radiogroup" data-i18n-aria-label="view.label" aria-label="View">
+          <button type="button" class="seg__btn" role="radio" aria-checked="true" data-view="cards" data-i18n-tip="view.cards" data-kbd="1"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-layout-grid"/></svg><span class="not-phone" data-i18n="view.cards">Cards</span></button>
+          <button type="button" class="seg__btn" role="radio" aria-checked="false" tabindex="-1" data-view="labels" data-i18n-tip="view.labels" data-kbd="2"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-qr-code"/></svg><span class="not-phone" data-i18n="view.labels">Labels</span></button>
+          <button type="button" class="seg__btn" role="radio" aria-checked="false" tabindex="-1" data-view="table" data-i18n-tip="view.table" data-kbd="3"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-table-2"/></svg><span class="not-phone" data-i18n="view.table">Table</span></button>
         </div>
-      </div>
-      <p id="empty-state" class="empty hidden" data-i18n="empty.no_codes">No codes yet. Click New or Scan to get started.</p>
-    </section>
-    <footer class="statusbar">
-      <div id="statusbar-zoom" class="statusbar-zoom">
-        <button type="button" id="btn-zoom-out" class="zoom-btn" data-i18n-tip="action.zoom_out" aria-label="Zoom out">
-          <i class="mdi mdi-minus" aria-hidden="true"></i>
-        </button>
-        <div class="filter-dropdown zoom-dropdown">
-          <button type="button" id="btn-zoom-pct" class="zoom-pct filter-dropdown-toggle" data-i18n-tip="action.zoom_cycle">100%</button>
-          <div id="zoom-pct-panel" class="filter-dropdown-panel zoom-pct-panel open-up hidden"></div>
+        <div class="zoom not-phone" id="zoom" role="group" data-i18n-aria-label="view.grid_size" aria-label="Grid size">
+          <button type="button" class="icon-btn icon-btn--sm" id="zoom-out" data-i18n-tip="view.smaller" data-kbd="Ctrl −"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-minus"/></svg></button>
+          <button type="button" class="zoom__val" id="zoom-val" aria-haspopup="menu" aria-expanded="false" data-i18n-tip="view.grid_size" dir="ltr">100%</button>
+          <button type="button" class="icon-btn icon-btn--sm" id="zoom-in" data-i18n-tip="view.larger" data-kbd="Ctrl +"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-plus"/></svg></button>
         </div>
-        <button type="button" id="btn-zoom-in" class="zoom-btn" data-i18n-tip="action.zoom_in" aria-label="Zoom in">
-          <i class="mdi mdi-plus" aria-hidden="true"></i>
-        </button>
-        <button type="button" id="btn-zoom-reset" class="zoom-btn" data-i18n-tip="action.zoom_reset" aria-label="Reset zoom">
-          <i class="mdi mdi-refresh" aria-hidden="true"></i>
-        </button>
+        <button type="button" class="icon-btn icon-btn--outline not-phone" id="btn-invert" aria-pressed="false" data-i18n-tip="action.invert" data-kbd="I"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-contrast"/></svg></button>
       </div>
-      <div class="statusbar-right">
-        <span id="statusbar-count"></span>
-        <button type="button" id="btn-table-view" class="rm-btn rm-btn-secondary" data-i18n-tip="table.tooltip">
-          <i id="btn-table-view-icon" class="mdi mdi-table" aria-hidden="true"></i>
-        </button>
+
+      <div class="filters" id="filters" role="toolbar" data-i18n-aria-label="filter.title" aria-label="Filters"><!-- browse.js: filter chips + Clear filters --></div>
+
+      <!-- Views (browse.js shows exactly one; skeleton until the first load) -->
+      <div class="grid" id="view-loading" aria-hidden="true">
+        <div class="code-card skel-card"><div class="skel skel-card__tile"></div><div class="skel-card__body"><div class="skel" style="inline-size:40%;block-size:10px"></div><div class="skel" style="inline-size:85%;block-size:16px"></div><div class="skel" style="inline-size:60%;block-size:12px"></div><div class="skel" style="inline-size:70%;block-size:12px"></div><div class="skel skel-card__pill"></div></div></div><div class="code-card skel-card"><div class="skel skel-card__tile"></div><div class="skel-card__body"><div class="skel" style="inline-size:40%;block-size:10px"></div><div class="skel" style="inline-size:85%;block-size:16px"></div><div class="skel" style="inline-size:60%;block-size:12px"></div><div class="skel" style="inline-size:70%;block-size:12px"></div><div class="skel skel-card__pill"></div></div></div><div class="code-card skel-card"><div class="skel skel-card__tile"></div><div class="skel-card__body"><div class="skel" style="inline-size:40%;block-size:10px"></div><div class="skel" style="inline-size:85%;block-size:16px"></div><div class="skel" style="inline-size:60%;block-size:12px"></div><div class="skel" style="inline-size:70%;block-size:12px"></div><div class="skel skel-card__pill"></div></div></div><div class="code-card skel-card"><div class="skel skel-card__tile"></div><div class="skel-card__body"><div class="skel" style="inline-size:40%;block-size:10px"></div><div class="skel" style="inline-size:85%;block-size:16px"></div><div class="skel" style="inline-size:60%;block-size:12px"></div><div class="skel" style="inline-size:70%;block-size:12px"></div><div class="skel skel-card__pill"></div></div></div><div class="code-card skel-card"><div class="skel skel-card__tile"></div><div class="skel-card__body"><div class="skel" style="inline-size:40%;block-size:10px"></div><div class="skel" style="inline-size:85%;block-size:16px"></div><div class="skel" style="inline-size:60%;block-size:12px"></div><div class="skel" style="inline-size:70%;block-size:12px"></div><div class="skel skel-card__pill"></div></div></div><div class="code-card skel-card"><div class="skel skel-card__tile"></div><div class="skel-card__body"><div class="skel" style="inline-size:40%;block-size:10px"></div><div class="skel" style="inline-size:85%;block-size:16px"></div><div class="skel" style="inline-size:60%;block-size:12px"></div><div class="skel" style="inline-size:70%;block-size:12px"></div><div class="skel skel-card__pill"></div></div></div>
       </div>
+      <div class="grid" id="view-cards" role="list" data-i18n-aria-label="nav.codes" aria-label="Codes" hidden></div>
+      <div class="labels-wall" id="view-labels" role="list" data-i18n-aria-label="nav.labels" aria-label="Labels" hidden></div>
+      <div class="table-wrap" id="view-table" hidden>
+        <table class="table" id="codes-table">
+          <caption class="sr-only" data-i18n="table.title">Codes table</caption>
+          <thead>
+            <tr>
+              <th class="col-check" scope="col"><input type="checkbox" class="check" id="table-check-all" data-i18n-aria-label="action.select_all" aria-label="Select all"></th>
+              <th class="col-qr" scope="col"><span class="sr-only" data-i18n="table.qr">QR code</span></th>
+              <th class="col-name" scope="col" data-sort="name"><button type="button" class="sort"><span data-i18n="code.name">Name</span><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-arrow-up-down"/></svg></button></th>
+              <th class="hide-sm" scope="col" data-sort="protocol"><button type="button" class="sort"><span data-i18n="code.protocol">Protocol</span><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-arrow-up-down"/></svg></button></th>
+              <th class="hide-sm" scope="col" data-sort="device_vendor"><button type="button" class="sort"><span data-i18n="filter.vendor">Vendor</span><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-arrow-up-down"/></svg></button></th>
+              <th class="hide-sm" scope="col" data-sort="device_product"><button type="button" class="sort"><span data-i18n="filter.product">Product</span><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-arrow-up-down"/></svg></button></th>
+              <th class="hide-sm" scope="col" data-sort="device_type"><button type="button" class="sort"><span data-i18n="filter.type">Type</span><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-arrow-up-down"/></svg></button></th>
+              <th class="hide-sm" scope="col" data-sort="area"><button type="button" class="sort"><span data-i18n="filter.area">Area</span><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-arrow-up-down"/></svg></button></th>
+              <th class="hide-sm col-cats" scope="col" data-sort="categories"><button type="button" class="sort"><span data-i18n="categories.title">Categories</span><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-arrow-up-down"/></svg></button></th>
+              <th class="hide-sm" scope="col" data-sort="in_use"><button type="button" class="sort"><span data-i18n="code.in_use">In use</span><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-arrow-up-down"/></svg></button></th>
+              <th class="hide-sm" scope="col" data-sort="connectivity"><button type="button" class="sort"><span data-i18n="code.connectivity">Connectivity</span><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-arrow-up-down"/></svg></button></th>
+              <th class="hide-sm" scope="col" data-sort="created_at"><button type="button" class="sort"><span data-i18n="code.added_at">Added</span><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-arrow-up-down"/></svg></button></th>
+              <th class="col-actions" scope="col"><span class="sr-only" data-i18n="table.actions">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody id="codes-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Empty vault (first run) -->
+      <section class="empty" id="empty-vault" aria-labelledby="empty-vault-title" hidden>
+        <svg class="empty__art" viewBox="0 0 168 128" aria-hidden="true" focusable="false">
+          <g fill="none" stroke="var(--orb-line)" stroke-width="1.2"><ellipse cx="84" cy="66" rx="78" ry="30" transform="rotate(-12 84 66)"/><ellipse cx="84" cy="66" rx="40" ry="58" transform="rotate(28 84 66)" stroke-dasharray="2 5"/></g>
+          <rect x="58" y="34" width="52" height="64" rx="9" fill="var(--surface)" stroke="var(--accent-line)" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <g fill="var(--line-2)"><rect x="70" y="48" width="12" height="12" rx="2"/><rect x="86" y="48" width="12" height="12" rx="2"/><rect x="70" y="64" width="12" height="12" rx="2"/></g>
+          <rect x="68" y="84" width="32" height="5" rx="2.5" fill="var(--line-2)"/>
+          <circle cx="16" cy="54" r="4" fill="var(--orb-2)"/><circle cx="150" cy="82" r="3" fill="var(--orb-3)"/><circle cx="132" cy="24" r="5" fill="var(--orb-1)"/><circle cx="132" cy="24" r="11" fill="var(--orb-1)" opacity=".15"/>
+        </svg>
+        <h2 class="empty__title" id="empty-vault-title" data-i18n="empty.vault_title">Your vault is empty</h2>
+        <p class="empty__body" data-i18n="empty.vault_body">Scan the pairing-code label on a device or its box, or type a code in. Everything stays on your Home Assistant.</p>
+        <div class="empty__actions">
+          <button type="button" class="btn btn--hero btn--lg" id="empty-scan"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-scan-line"/></svg><span data-i18n="empty.scan_first">Scan your first label</span></button>
+          <button type="button" class="btn btn--lg" id="empty-new"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-keyboard"/></svg><span data-i18n="empty.type_code">Type a code</span></button>
+        </div>
+        <button type="button" class="link-btn" id="empty-import"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-file-up"/></svg><span data-i18n="empty.import">Import a JSON export</span></button>
+      </section>
+
+      <!-- No matches (search / filters) -->
+      <section class="empty" id="empty-nomatch" aria-labelledby="empty-nomatch-title" hidden>
+        <svg class="empty__art" viewBox="0 0 168 128" aria-hidden="true" focusable="false">
+          <g fill="none" stroke="var(--orb-line)" stroke-width="1.2"><ellipse cx="84" cy="64" rx="76" ry="28" transform="rotate(10 84 64)"/></g>
+          <circle cx="76" cy="58" r="30" fill="var(--surface)" stroke="var(--accent)" stroke-width="3"/><path d="M98 80l20 20" stroke="var(--accent)" stroke-width="6" stroke-linecap="round"/>
+          <path d="M66 48l20 20M86 48L66 68" stroke="var(--text-3)" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="20" cy="84" r="3.5" fill="var(--orb-2)"/><circle cx="148" cy="40" r="4" fill="var(--orb-3)"/>
+        </svg>
+        <h2 class="empty__title" id="empty-nomatch-title" data-i18n="empty.nomatch_title">No codes match</h2>
+        <p class="empty__body" id="empty-nomatch-body"><!-- browse.js: empty.nomatch_body / empty.nomatch_body_noquery --></p>
+        <div class="active-chips" id="empty-nomatch-chips"><!-- browse.js: .active-chip per active filter --></div>
+        <div class="empty__actions">
+          <button type="button" class="btn" id="empty-clear-search"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-search-x"/></svg><span data-i18n="empty.clear_search">Clear search</span></button>
+          <button type="button" class="btn btn--primary" id="empty-clear-filters"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-filter-x"/></svg><span data-i18n="empty.clear_filters">Clear all filters</span></button>
+        </div>
+      </section>
+
+      <!-- Load failure (boot.js) -->
+      <section class="load-error" id="load-error" role="alert" hidden>
+        <span class="confirm__icon confirm__icon--error"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-cloud-off"/></svg></span>
+        <h2 class="empty__title" data-i18n="app.load_failed_title">Can’t load your codes</h2>
+        <p class="empty__body" id="load-error-msg"></p>
+        <button type="button" class="btn btn--primary" id="load-error-retry"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-refresh-cw"/></svg><span data-i18n="action.retry">Try again</span></button>
+      </section>
+    </main>
+  </div>
+
+  <!-- ============================== Phone dock (≤720) ============================== -->
+  <nav class="dock" id="dock" data-i18n-aria-label="nav.main" aria-label="Main">
+    <button type="button" class="dock__item" id="dock-codes" aria-current="page"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-layout-grid"/></svg><span data-i18n="nav.codes">Codes</span></button>
+    <button type="button" class="dock__item" id="dock-labels" aria-current="false"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-qr-code"/></svg><span data-i18n="nav.labels">Labels</span></button>
+    <div class="dock__scan"><span class="dock__ring" aria-hidden="true"></span><button type="button" class="dock__orb" id="dock-scan" data-i18n-aria-label="action.scan_code" aria-label="Scan a code"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-scan-line"/></svg><span data-i18n="nav.scan">Scan</span></button></div>
+    <button type="button" class="dock__item" id="dock-new"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-plus"/></svg><span data-i18n="nav.new">New</span></button>
+    <button type="button" class="dock__item" id="dock-more" aria-haspopup="dialog" aria-controls="sheet-more"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-menu"/></svg><span data-i18n="nav.more">More</span><span class="badge badge--dot" id="dock-more-dot" hidden></span></button>
+  </nav>
+
+  <!-- ============================== Selection bar ============================== -->
+  <div class="selbar" id="selbar" role="toolbar" data-i18n-aria-label="selbar.label" aria-label="Selection" hidden>
+    <span class="selbar__count" id="selbar-count" aria-live="polite"><!-- browse.js: AM.tNodes("status.selected", …) --></span>
+    <button type="button" class="btn btn--ghost btn--sm" id="selbar-all"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-list-checks"/></svg><span class="not-phone" data-i18n="action.select_all">Select all</span><span class="only-phone" data-i18n="filter.all_short">All</span><span class="kbd" aria-hidden="true">Ctrl A</span></button>
+    <span class="vsep not-phone" aria-hidden="true"></span>
+    <button type="button" class="btn btn--danger btn--sm" id="selbar-trash" data-i18n-aria-label="action.move_to_trash"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-trash-2"/></svg><span class="not-phone" data-i18n="action.move_to_trash">Move to Trash</span></button>
+    <button type="button" class="icon-btn icon-btn--sm" id="selbar-clear" data-i18n-tip="action.clear_selection" data-kbd="Esc"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-x"/></svg></button>
+  </div>
+</div>
+
+<!-- ============================== Toasts (never inert) ============================== -->
+<div class="toast-region" id="toasts" aria-live="polite" aria-relevant="additions"></div>
+
+<!-- ============================== Popovers (AM.popover positions them) ============================== -->
+<div id="popovers">
+  <!-- Display: theme + invert (boot.js) -->
+  <div class="menu display-menu" id="menu-display" role="dialog" data-i18n-aria-label="display.title" aria-label="Display" hidden>
+    <div class="field">
+      <span class="field__label" id="display-theme-label" data-i18n="display.theme">Theme</span>
+      <div class="seg seg--block" id="display-theme" role="radiogroup" aria-labelledby="display-theme-label">
+        <button type="button" class="seg__btn" role="radio" aria-checked="true" data-value="auto"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-sun-moon"/></svg><span data-i18n="display.auto">Auto</span></button>
+        <button type="button" class="seg__btn" role="radio" aria-checked="false" tabindex="-1" data-value="light"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-sun"/></svg><span data-i18n="display.light">Light</span></button>
+        <button type="button" class="seg__btn" role="radio" aria-checked="false" tabindex="-1" data-value="dark"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-moon"/></svg><span data-i18n="display.dark">Dark</span></button>
+      </div>
+    </div>
+    <label class="toggle-row"><span class="toggle-row__text"><span class="toggle-row__title" data-i18n="action.invert">Invert QR codes</span><span class="toggle-row__desc" data-i18n="display.invert_desc">White on black, for dark screens</span></span><input type="checkbox" class="switch" role="switch" id="display-invert"></label>
+    <span class="warn-note"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-triangle-alert"/></svg><span data-i18n="display.invert_warn">Some phone scanners cannot read inverted codes. Turn off if a scan fails.</span></span>
+  </div>
+
+  <!-- Language (boot.js fills the list: Automatic + 24 native names) -->
+  <div class="menu lang-menu" id="menu-lang" role="dialog" data-i18n-aria-label="lang.label" aria-label="Language" hidden>
+    <div class="search"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-search"/></svg><input class="input" type="search" id="lang-search" autocomplete="off" data-i18n-placeholder="lang.search" data-i18n-aria-label="lang.search" placeholder="Search languages" aria-label="Search languages"></div>
+    <div class="lang-menu__list" id="lang-list" role="menu" data-i18n-aria-label="lang.label" aria-label="Language"></div>
+  </div>
+</div>
+
+<!-- ============================== Layers: sheets, dialogs, overlays (AM.sheets) ============================== -->
+<div id="layers">
+  <!-- Detail / quick view (detail.js) -->
+  <section class="sheet sheet--side detail" id="sheet-detail" role="dialog" aria-modal="true" aria-labelledby="detail-title" hidden>
+    <div class="sheet__grabber" aria-hidden="true"></div>
+    <header class="sheet__head">
+      <div class="sheet__heading">
+        <div class="detail__meta" id="detail-meta"></div>
+        <h2 class="sheet__title" id="detail-title" dir="auto"></h2>
+        <p class="sheet__sub" id="detail-sub" dir="auto"></p>
+      </div>
+      <div class="detail__nav">
+        <button type="button" class="icon-btn icon-btn--sm not-phone" id="detail-prev" data-i18n-tip="detail.previous" data-kbd="↑"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-chevron-up"/></svg></button>
+        <span class="not-phone" id="detail-pos" dir="ltr"></span>
+        <button type="button" class="icon-btn icon-btn--sm not-phone" id="detail-next" data-i18n-tip="detail.next" data-kbd="↓"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-chevron-down"/></svg></button>
+        <span class="sep not-phone" aria-hidden="true"></span>
+        <button type="button" class="icon-btn" data-close data-i18n-tip="action.close" data-kbd="Esc"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-x"/></svg></button>
+      </div>
+    </header>
+    <div class="sheet__body" id="detail-body"></div>
+    <footer class="sheet__foot" id="detail-foot">
+      <button type="button" class="btn btn--danger-ghost" id="detail-trash"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-trash-2"/></svg><span data-i18n="action.move_to_trash">Move to Trash</span></button>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn--primary" id="detail-edit"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-pencil"/></svg><span data-i18n="action.edit">Edit</span><span class="kbd" aria-hidden="true">E</span></button>
     </footer>
-  </main>
+  </section>
 
-  <dialog id="code-dialog">
-    <form id="code-form" method="dialog">
-      <h3 id="code-dialog-title" data-i18n="code.dialog_new">New code</h3>
-      <input type="hidden" id="code-id" />
-      <label><span data-i18n="code.protocol">Protocol</span>
-        <select id="code-type">
-          <option value="matter" data-i18n="code.protocol_matter">Matter</option>
-          <option value="zwave" data-i18n="code.protocol_zwave">Z-Wave</option>
-          <option value="zigbee" data-i18n="code.protocol_zigbee">Zigbee</option>
-          <option value="homekit" data-i18n="code.protocol_homekit">HomeKit</option>
-          <option value="tuya" data-i18n="code.protocol_tuya">Tuya</option>
-          <option value="other" data-i18n="code.protocol_other">Other</option>
-        </select>
-      </label>
-      <label><span data-i18n="code.name">Name</span> <input type="text" id="code-name" required /></label>
-      <label><span data-i18n="code.category">Category</span>
-        <div class="category-select-row">
-          <div class="filter-dropdown code-category-dropdown" id="code-category-dropdown">
-            <button type="button" id="code-category-toggle" class="filter-dropdown-toggle" data-i18n="code.category_none">No category</button>
-            <div id="code-category-checks" class="filter-dropdown-panel hidden"></div>
-          </div>
-          <button type="button" id="btn-add-category-inline" class="btn icon" data-i18n-tip="categories.add_title">
-            <svg class="rm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="./static/brand/icons.svg#rm-icon-plus"/></svg>
-          </button>
-        </div>
-      </label>
-      <div id="code-fields-matter" class="code-type-fields">
-      <div class="scan-inline-row">
-        <button type="button" id="btn-scan-in-form" class="rm-btn rm-btn-secondary" data-i18n="action.scan_code">Scan QR</button>
-        <label class="rm-btn rm-btn-secondary file-label scan-photo-label">
-          <span data-i18n="scan.upload_photo">Upload photo</span>
-          <input type="file" id="scan-file-in-form" accept="image/*" hidden />
-        </label>
-      </div>
-      <p id="scan-file-in-form-error" class="form-hint scan-photo-error hidden"></p>
-      <label><span data-i18n="code.manual">Manual code (11 digits)</span>
-        <input type="text" id="code-manual" data-i18n-placeholder="code.manual_placeholder" placeholder="1234-567-8901" />
-      </label>
-      <label><span data-i18n="code.qr">QR payload (MT:…)</span>
-        <textarea id="code-qr" rows="3" data-i18n-placeholder="code.qr_placeholder" placeholder="MT:Y.K90…"></textarea>
-      </label>
-      <details id="code-mt-decode" class="form-section">
-        <summary data-i18n="code.decode_mt">Decode Matter payload</summary>
-        <div id="code-mt-decode-result" class="mt-decode-result"></div>
-      </details>
-      </div>
-      <div id="code-fields-homekit" class="code-type-fields hidden">
-      <div class="scan-inline-row">
-        <button type="button" id="btn-scan-homekit" class="rm-btn rm-btn-secondary" data-i18n="action.scan_code">Scan QR</button>
-        <label class="rm-btn rm-btn-secondary file-label scan-photo-label">
-          <span data-i18n="scan.upload_photo">Upload photo</span>
-          <input type="file" id="scan-file-homekit" accept="image/*" hidden />
-        </label>
-      </div>
-      <p id="scan-file-homekit-error" class="form-hint scan-photo-error hidden"></p>
-      <label><span data-i18n="code.homekit_uri">Setup URI (X-HM://…)</span>
-        <textarea id="code-homekit-uri" rows="3" data-i18n-placeholder="code.homekit_uri_placeholder" placeholder="X-HM://0081YCYEP3QYT"></textarea>
-      </label>
-      <p id="code-homekit-derived" class="form-hint hidden" aria-live="polite"></p>
-      <label class="homekit-pairing-optional"><span data-i18n="code.homekit_pairing">Pairing code (8 digits, optional)</span>
-        <input type="text" id="code-homekit-pairing" inputmode="numeric" data-i18n-placeholder="code.homekit_pairing_placeholder" placeholder="841-31-633" maxlength="11" />
-      </label>
-      <input type="hidden" id="code-homekit-setup-id" />
-      <input type="hidden" id="code-homekit-category" value="other" />
-      </div>
-      <div id="code-fields-zwave" class="code-type-fields hidden">
-      <div class="scan-inline-row">
-        <button type="button" id="btn-scan-zwave" class="rm-btn rm-btn-secondary" data-i18n="action.scan_code">Scan QR</button>
-        <label class="rm-btn rm-btn-secondary file-label scan-photo-label">
-          <span data-i18n="scan.upload_photo">Upload photo</span>
-          <input type="file" id="scan-file-zwave" accept="image/*" hidden />
-        </label>
-      </div>
-      <p id="scan-file-zwave-error" class="form-hint scan-photo-error hidden"></p>
-      <label><span data-i18n="code.zwave_dsk">DSK (40 digits)</span>
-        <input type="text" id="code-zwave-dsk" data-i18n-placeholder="code.zwave_dsk_placeholder" placeholder="44383-12478-02618-07852-54448-44375-52483-13627" />
-      </label>
-      <label><span data-i18n="code.zwave_qr">SmartStart QR (90 digits)</span>
-        <textarea id="code-zwave-qr" rows="3" data-i18n-placeholder="code.zwave_qr_placeholder" placeholder="9001…"></textarea>
-      </label>
-      <details id="code-zwave-decode" class="form-section">
-        <summary data-i18n="code.decode_zwave">Decode Z-Wave payload</summary>
-        <div id="code-zwave-decode-result" class="mt-decode-result"></div>
-      </details>
-      </div>
-      <div id="code-fields-other" class="code-type-fields hidden">
-      <div class="scan-inline-row">
-        <button type="button" id="btn-scan-other" class="rm-btn rm-btn-secondary" data-i18n="action.scan_code">Scan QR</button>
-        <label class="rm-btn rm-btn-secondary file-label scan-photo-label">
-          <span data-i18n="scan.upload_photo">Upload photo</span>
-          <input type="file" id="scan-file-other" accept="image/*" hidden />
-        </label>
-      </div>
-      <p id="scan-file-other-error" class="form-hint scan-photo-error hidden"></p>
-      <label id="code-other-standard-row"><span data-i18n="code.other_standard">Standard</span>
-        <input type="text" id="code-other-standard" data-i18n-placeholder="code.other_standard_placeholder" placeholder="e.g. Tuya, Zigbee 3.0" />
-      </label>
-      <label><span data-i18n="code.other_manual">Manual code</span>
-        <input type="text" id="code-other-manual" data-i18n-placeholder="code.other_manual_placeholder" placeholder="Any pairing code" />
-      </label>
-      <label><span data-i18n="code.other_qr">QR payload</span>
-        <textarea id="code-other-qr" rows="3" data-i18n-placeholder="code.other_qr_placeholder" placeholder="Raw QR text"></textarea>
-      </label>
-      </div>
-      <details id="code-details" class="form-section">
-        <summary data-i18n="code.device_details">Device details</summary>
-        <label class="switch-row">
-          <input type="checkbox" id="code-in-use" />
-          <span data-i18n="code.in_use">In use</span>
-        </label>
-        <label><span data-i18n="code.device_vendor">Device vendor</span>
-          <input type="text" id="code-device-vendor" data-i18n-placeholder="code.device_vendor_placeholder" placeholder="e.g. IKEA" />
-        </label>
-        <label><span data-i18n="code.device_product">Device product name</span>
-          <input type="text" id="code-device-product" data-i18n-placeholder="code.device_product_placeholder" placeholder="e.g. MYGGBETT" />
-        </label>
-        <label><span data-i18n="code.device_type">Device type</span>
-          <input type="text" id="code-device-type" list="device-type-options" data-i18n-placeholder="code.device_type_placeholder" placeholder="e.g. light, switch" />
-          <datalist id="device-type-options"></datalist>
-        </label>
-        <label><span data-i18n="code.description">Description</span>
-          <input type="text" id="code-description" data-i18n-placeholder="code.description_placeholder" placeholder="e.g. Window sensor" />
-        </label>
-        <label><span data-i18n="code.area">Area</span>
-          <input type="text" id="code-area" list="area-options" data-i18n-placeholder="code.area_placeholder" placeholder="e.g. Living room" />
-          <datalist id="area-options"></datalist>
-        </label>
-        <div class="connectivity-row">
-          <span class="form-field-label" data-i18n="code.connectivity">Connectivity</span>
-          <div class="connectivity-options">
-            <label><input type="checkbox" id="code-conn-wifi" /> <span data-i18n="code.conn_wifi">WiFi</span></label>
-            <label><input type="checkbox" id="code-conn-matter" /> <span data-i18n="code.conn_matter">Matter</span></label>
-            <label><input type="checkbox" id="code-conn-zigbee" /> <span data-i18n="code.conn_zigbee">Zigbee</span></label>
-            <label><input type="checkbox" id="code-conn-bluetooth" /> <span data-i18n="code.conn_bluetooth">Bluetooth</span></label>
-            <label><input type="checkbox" id="code-conn-zwave" /> <span data-i18n="code.conn_zwave">Z-Wave</span></label>
-          </div>
-        </div>
-        <label><span data-i18n="code.notes">Notes</span> <textarea id="code-notes" rows="2"></textarea></label>
-      </details>
-      <details id="code-ha-details" class="form-section">
-        <summary data-i18n="code.ha_link">Home Assistant link (optional)</summary>
-        <label><span data-i18n="code.ha_device">Device</span>
-          <!-- Native <input list=datalist> replaced with a hand-rolled dropdown: inside
-               HA's ingress iframe, Android WebView's datalist popup can swallow the tap
-               that should open the soft keyboard once the list has more than a handful
-               of options (every HA device, easily 100+), leaving the field focused but
-               unable to be typed into. -->
-          <div class="ha-device-autocomplete">
-            <input type="text" id="code-ha-device-name" autocomplete="off" data-i18n-placeholder="code.ha_device_placeholder" placeholder="Start typing a device name…" />
-            <ul id="ha-device-suggestions" class="ha-device-suggestions hidden" role="listbox"></ul>
-          </div>
-          <input type="hidden" id="code-ha-device" />
-        </label>
-        <p id="code-ha-device-suggest" class="form-hint hidden">
-          <span data-i18n="code.ha_device_suggested">Suggested:</span>
-          <a href="#" id="code-ha-device-suggest-apply"></a>
-        </p>
-        <a href="#" id="btn-open-ha-device" class="rm-btn rm-btn-secondary hidden" target="_blank" rel="noopener" data-i18n="action.open_ha_device">Open device in Home Assistant</a>
-      </details>
-      <div class="dialog-actions">
-        <button type="button" class="rm-btn rm-btn-secondary" data-close data-i18n="action.cancel">Cancel</button>
-        <button type="submit" class="rm-btn rm-btn-primary" data-i18n="action.save">Save</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog id="scan-dialog" class="scan-dialog">
-    <form method="dialog">
-      <h3 data-i18n="scan.title">Scan Matter code</h3>
-      <p id="scan-hint" class="scan-hint" data-i18n="scan.hint_native">Point your camera at the Matter QR on the device or manual.</p>
-      <div id="scan-reader" class="scan-reader"></div>
-      <button type="button" id="btn-scan-torch" class="rm-btn rm-btn-secondary scan-torch-btn hidden" aria-pressed="false" data-i18n-tip="scan.torch">
-        <i class="mdi mdi-flashlight" aria-hidden="true"></i> <span data-i18n="scan.torch">Flash</span>
-      </button>
-      <label class="scan-photo-label">
-        <span data-i18n="scan.photo">Or upload a photo</span>
-        <input type="file" id="scan-file-input" accept="image/*" capture="environment" />
-      </label>
-      <div class="dialog-actions">
-        <button type="button" id="scan-stop" class="rm-btn rm-btn-secondary" data-close data-i18n="action.cancel">Close</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog id="category-dialog">
-    <form id="category-form" method="dialog">
-      <h3 id="category-dialog-title" data-i18n="categories.dialog_new">New category</h3>
-      <input type="hidden" id="category-id" />
-      <label><span data-i18n="code.name">Name</span> <input type="text" id="category-name" required /></label>
-      <div class="form-field form-field-color">
-        <span class="form-field-label" id="category-color-label" data-i18n="categories.color">Color</span>
-        <div class="category-color-control">
-          <input type="color" id="category-color" value="#c9791a" aria-labelledby="category-color-label" />
-          <span class="category-color-hex" id="category-color-hex">#C9791A</span>
-        </div>
-        <div class="category-color-presets" id="category-color-presets"></div>
-      </div>
-      <label><span data-i18n="categories.icon">Icon</span>
-        <input type="hidden" id="category-icon" value="folder" />
-        <div id="category-icon-picker" class="category-icon-picker-host"></div>
-      </label>
-      <div class="dialog-actions">
-        <button type="button" class="rm-btn rm-btn-danger" id="category-delete" data-i18n="action.delete" hidden>Delete</button>
-        <span class="dialog-actions-spacer"></span>
-        <button type="button" class="rm-btn rm-btn-secondary" data-close data-i18n="action.cancel">Cancel</button>
-        <button type="submit" class="rm-btn rm-btn-primary" data-i18n="action.save">Save</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog id="backup-dialog">
-    <form id="backup-form" method="dialog">
-      <h3 data-i18n="backup.title">Backup</h3>
-      <label class="switch-row">
-        <input type="checkbox" id="backup-auto-enabled" />
-        <span data-i18n="backup.auto_enabled">Automatic backup</span>
-      </label>
-      <label><span data-i18n="backup.frequency">Frequency</span>
-        <select id="backup-frequency">
-          <option value="hourly" data-i18n="backup.freq_hourly">Hourly</option>
-          <option value="daily" data-i18n="backup.freq_daily">Daily</option>
-          <option value="weekly" data-i18n="backup.freq_weekly">Weekly</option>
-          <option value="monthly" data-i18n="backup.freq_monthly">Monthly</option>
-        </select>
-      </label>
-      <label><span data-i18n="backup.time">Time</span>
-        <input type="time" id="backup-auto-time" value="03:00" />
-      </label>
-      <p id="backup-hourly-hint" class="form-hint hidden" data-i18n="backup.hourly_hint">Hourly backups only use the minute, not the hour, below.</p>
-      <label id="backup-weekday-row" class="hidden"><span data-i18n="backup.weekday">Day of week</span>
-        <select id="backup-weekday">
-          <option value="0" data-i18n="backup.mon">Monday</option>
-          <option value="1" data-i18n="backup.tue">Tuesday</option>
-          <option value="2" data-i18n="backup.wed">Wednesday</option>
-          <option value="3" data-i18n="backup.thu">Thursday</option>
-          <option value="4" data-i18n="backup.fri">Friday</option>
-          <option value="5" data-i18n="backup.sat">Saturday</option>
-          <option value="6" data-i18n="backup.sun">Sunday</option>
-        </select>
-      </label>
-      <label id="backup-day-of-month-row" class="hidden"><span data-i18n="backup.day_of_month">Day of month</span>
-        <input type="number" id="backup-day-of-month" min="1" max="28" value="1" />
-      </label>
-      <label><span data-i18n="backup.keep_count">Backups to keep</span>
-        <input type="number" id="backup-keep-count" min="1" max="100" value="10" />
-      </label>
-      <p id="backup-last-info" class="form-hint"></p>
-      <div class="dialog-actions">
-        <button type="button" id="backup-now-btn" class="rm-btn rm-btn-secondary" data-i18n="action.backup_now">Backup now</button>
-        <span class="dialog-actions-spacer"></span>
-        <button type="button" class="rm-btn rm-btn-secondary" data-close data-i18n="action.cancel">Cancel</button>
-        <button type="submit" class="rm-btn rm-btn-primary" data-i18n="action.ok">OK</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog id="import-dialog">
-    <form method="dialog">
-      <h3 data-i18n="import.title">Import vault</h3>
-      <p class="confirm-message" data-i18n="import.hint">Replace overwrites everything. Merge adds the imported codes and categories to what you already have.</p>
-      <div class="dialog-actions">
-        <button type="button" id="import-cancel" class="rm-btn rm-btn-secondary" data-close data-i18n="action.cancel">Cancel</button>
-        <button type="button" id="import-replace" class="rm-btn rm-btn-danger" data-i18n="action.replace">Replace</button>
-        <button type="button" id="import-merge" class="rm-btn rm-btn-primary" data-i18n="action.merge">Merge</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog id="quickview-dialog" class="quickview-dialog">
-    <h3 id="quickview-name"></h3>
-    <div id="quickview-image-wrap" class="quickview-image-wrap"></div>
-    <p id="quickview-manual" class="quickview-manual"></p>
-    <p id="quickview-meta" class="quickview-meta"></p>
-    <div class="quickview-ha-links">
-      <a href="#" id="quickview-open-ha-device" class="rm-btn rm-btn-secondary hidden" target="_blank" rel="noopener" data-i18n="action.open_ha_device">Open device in Home Assistant</a>
+  <!-- Present mode (detail.js) -->
+  <section class="present" id="present" role="dialog" aria-modal="true" aria-labelledby="present-name" data-scrim="none" hidden>
+    <div class="present__bar">
+      <button type="button" class="icon-btn" data-close data-i18n-tip="action.close" data-kbd="Esc"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-x"/></svg></button>
+      <span class="proto" id="present-proto"></span>
+      <span class="spacer"></span>
+      <span class="tag" id="present-awake" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-sun"/></svg><span data-i18n="present.awake">Screen kept awake</span></span>
+      <button type="button" class="icon-btn" id="present-invert" aria-pressed="false" data-i18n-tip="action.invert" data-kbd="I"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-contrast"/></svg></button>
     </div>
-    <div class="dialog-actions">
-      <button type="button" id="quickview-decode" class="rm-btn rm-btn-secondary hidden" data-i18n-tip="code.decode_mt">
-        <i class="mdi mdi-information-outline" aria-hidden="true"></i>
-      </button>
-      <button type="button" id="quickview-download" class="rm-btn rm-btn-secondary" data-i18n="action.download">Download</button>
-      <button type="button" id="quickview-edit" class="rm-btn rm-btn-secondary" data-i18n="action.edit">Edit</button>
-      <span class="dialog-actions-spacer"></span>
-      <button type="button" class="rm-btn rm-btn-primary" data-close data-i18n="action.close">Close</button>
+    <div class="present__stage" id="present-stage"></div>
+    <div class="present__foot">
+      <button type="button" class="icon-btn icon-btn--outline" id="present-prev" data-i18n-tip="detail.previous" data-kbd="←"><svg class="icon icon--flip-rtl" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-chevron-left"/></svg></button>
+      <span class="present__name" id="present-name" dir="auto"></span>
+      <span class="subtle num" id="present-pos" dir="ltr"></span>
+      <button type="button" class="icon-btn icon-btn--outline" id="present-next" data-i18n-tip="detail.next" data-kbd="→"><svg class="icon icon--flip-rtl" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-chevron-right"/></svg></button>
     </div>
-  </dialog>
+  </section>
 
-  <dialog id="mt-decode-dialog">
-    <h3 data-i18n="code.decode_mt">Decode Matter payload</h3>
-    <div id="mt-decode-dialog-result" class="mt-decode-result"></div>
-    <div class="dialog-actions">
-      <button type="button" class="rm-btn rm-btn-primary" data-close data-i18n="action.close">Close</button>
+  <!-- Editor: New / Edit code (editor.js) -->
+  <form class="sheet dialog dialog--lg editor" id="sheet-editor" role="dialog" aria-modal="true" aria-labelledby="editor-title" novalidate autocomplete="off" hidden>
+    <div class="sheet__grabber" aria-hidden="true"></div>
+    <header class="sheet__head sheet__head--center">
+      <h2 class="sheet__title" id="editor-title" dir="auto">New code</h2>
+      <span class="tag tag--accent" id="editor-provenance" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-sparkles"/></svg><span data-i18n="editor.filled_from_scan">Filled from scan</span></span>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn--sm" id="editor-scan" data-i18n-aria-label="editor.scan_instead"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-scan-line"/></svg><span class="not-phone" data-i18n="editor.scan_instead">Scan instead</span></button>
+      <button type="button" class="icon-btn" data-close data-i18n-tip="action.close" data-kbd="Esc"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-x"/></svg></button>
+    </header>
+    <div class="sheet__body" id="editor-body"></div>
+    <footer class="sheet__foot">
+      <span class="foot-hints" id="editor-legend" data-i18n="editor.key_legend">↵ save · Esc cancel</span>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn--ghost" data-close data-i18n="action.cancel">Cancel</button>
+      <button type="button" class="btn" id="editor-save-next" data-i18n-aria-label="editor.save_scan_next"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-scan-line"/></svg><span class="not-phone" data-i18n="editor.save_scan_next">Save &amp; scan next</span></button>
+      <button type="submit" class="btn btn--primary" id="editor-save"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-check"/></svg><span data-i18n="action.save_code">Save code</span></button>
+    </footer>
+  </form>
+
+  <!-- Category editor (dialogs.js) -->
+  <form class="sheet dialog" id="dialog-category" role="dialog" aria-modal="true" aria-labelledby="category-title" novalidate autocomplete="off" hidden>
+    <div class="sheet__grabber" aria-hidden="true"></div>
+    <header class="sheet__head sheet__head--center">
+      <h2 class="sheet__title" id="category-title" dir="auto">New category</h2>
+      <span id="category-preview"></span>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" data-close data-i18n-tip="action.close" data-kbd="Esc"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-x"/></svg></button>
+    </header>
+    <div class="sheet__body stack" id="category-body" style="--gap:18px"></div>
+    <footer class="sheet__foot">
+      <button type="button" class="btn btn--danger-ghost" id="category-delete" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-trash-2"/></svg><span data-i18n="action.delete">Delete</span></button>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn--ghost" data-close data-i18n="action.cancel">Cancel</button>
+      <button type="submit" class="btn btn--primary" id="category-save" data-i18n="action.save">Save</button>
+    </footer>
+  </form>
+
+  <!-- Trash (dialogs.js) -->
+  <section class="sheet dialog sheet--sm-title" id="dialog-trash" role="dialog" aria-modal="true" aria-labelledby="trash-title" aria-describedby="trash-sub" hidden>
+    <div class="sheet__grabber" aria-hidden="true"></div>
+    <header class="sheet__head sheet__head--center">
+      <span class="sheet__icon sheet__icon--danger"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-trash-2"/></svg></span>
+      <div class="sheet__heading"><h2 class="sheet__title" id="trash-title" data-i18n="trash.title">Trash</h2><p class="sheet__sub" id="trash-sub" data-i18n="trash.desc">Deleted codes and categories wait here until you empty the bin.</p></div>
+      <button type="button" class="icon-btn" data-close data-i18n-tip="action.close" data-kbd="Esc"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-x"/></svg></button>
+    </header>
+    <div class="sheet__body" id="trash-body"></div>
+    <footer class="sheet__foot">
+      <button type="button" class="btn btn--danger-ghost" id="trash-empty-bin" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-trash-2"/></svg><span data-i18n="trash.empty_bin">Empty bin</span></button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" data-close data-i18n="action.done">Done</button>
+    </footer>
+  </section>
+
+  <!-- Backups (dialogs.js) -->
+  <form class="sheet dialog sheet--sm-title" id="dialog-backup" role="dialog" aria-modal="true" aria-labelledby="backup-title" aria-describedby="backup-sub" novalidate hidden>
+    <div class="sheet__grabber" aria-hidden="true"></div>
+    <header class="sheet__head sheet__head--center">
+      <span class="sheet__icon sheet__icon--ok"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-database-backup"/></svg></span>
+      <div class="sheet__heading"><h2 class="sheet__title" id="backup-title" data-i18n="nav.backups">Backups</h2><p class="sheet__sub" id="backup-sub"></p></div>
+      <button type="button" class="icon-btn" data-close data-i18n-tip="action.close" data-kbd="Esc"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-x"/></svg></button>
+    </header>
+    <div class="sheet__body stack" id="backup-body" style="--gap:16px"></div>
+    <footer class="sheet__foot">
+      <button type="button" class="btn" id="backup-now"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-database-backup"/></svg><span data-i18n="backup.now">Back up now</span></button>
+      <span class="spacer"></span>
+      <button type="submit" class="btn btn--primary" id="backup-save" data-i18n="backup.save_schedule">Save schedule</button>
+    </footer>
+  </form>
+
+  <!-- Import & export (dialogs.js) -->
+  <section class="sheet dialog sheet--sm-title" id="dialog-import" role="dialog" aria-modal="true" aria-labelledby="import-title" aria-describedby="import-sub" hidden>
+    <div class="sheet__grabber" aria-hidden="true"></div>
+    <header class="sheet__head sheet__head--center">
+      <span class="sheet__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-arrow-up-down"/></svg></span>
+      <div class="sheet__heading"><h2 class="sheet__title" id="import-title" data-i18n="nav.import_export">Import &amp; export</h2><p class="sheet__sub" id="import-sub" data-i18n="import.desc">A JSON file with every code and category.</p></div>
+      <button type="button" class="icon-btn" data-close data-i18n-tip="action.close" data-kbd="Esc"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-x"/></svg></button>
+    </header>
+    <div class="sheet__body stack" id="import-body" style="--gap:14px"></div>
+    <footer class="sheet__foot">
+      <button type="button" class="btn btn--ghost" data-close data-i18n="action.cancel">Cancel</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn--primary" id="import-confirm" hidden></button>
+    </footer>
+  </section>
+
+  <!-- Filters (phones; browse.js) -->
+  <section class="sheet sheet--bottom dialog" id="sheet-filters" role="dialog" aria-modal="true" aria-labelledby="filters-title" hidden>
+    <div class="sheet__grabber" aria-hidden="true"></div>
+    <header class="sheet__head sheet__head--center">
+      <h2 class="sheet__title" id="filters-title" data-i18n="filter.title">Filters</h2>
+      <span class="tag tag--accent" id="filters-active" hidden></span>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" data-close data-i18n-tip="action.close" data-kbd="Esc"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-x"/></svg></button>
+    </header>
+    <div class="sheet__body" id="filters-body" style="padding-block:0"></div>
+    <footer class="sheet__foot">
+      <button type="button" class="btn btn--ghost" id="filters-clear" data-i18n="filter.clear_all">Clear all</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn--primary" id="filters-apply"></button>
+    </footer>
+  </section>
+
+  <!-- More: display + vault tools (phone dock / tablet ⋮; boot.js) -->
+  <section class="sheet sheet--bottom dialog dialog--sm" id="sheet-more" role="dialog" aria-modal="true" aria-labelledby="more-title" hidden>
+    <div class="sheet__grabber" aria-hidden="true"></div>
+    <h2 class="sr-only" id="more-title" data-i18n="more.title">More</h2>
+    <div class="sheet__body" id="more-body"></div>
+  </section>
+
+  <!-- Language (phones / tablets; boot.js) -->
+  <section class="sheet sheet--bottom dialog" id="sheet-lang" role="dialog" aria-modal="true" aria-labelledby="lang-sheet-title" hidden>
+    <div class="sheet__grabber" aria-hidden="true"></div>
+    <header class="sheet__head sheet__head--center">
+      <button type="button" class="icon-btn" id="lang-sheet-back" data-i18n-tip="action.back"><svg class="icon icon--flip-rtl" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-arrow-left"/></svg></button>
+      <h2 class="sheet__title" id="lang-sheet-title" data-i18n="lang.label">Language</h2>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" data-close data-i18n-tip="action.close"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-x"/></svg></button>
+    </header>
+    <div class="sheet__body lang-menu">
+      <div class="search"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-search"/></svg><input class="input" type="search" id="lang-sheet-search" autocomplete="off" data-i18n-placeholder="lang.search" data-i18n-aria-label="lang.search" placeholder="Search languages" aria-label="Search languages"></div>
+      <div class="lang-menu__list" id="lang-sheet-list" role="menu" data-i18n-aria-label="lang.label" aria-label="Language"></div>
     </div>
-  </dialog>
+  </section>
 
-  <dialog id="zwave-decode-dialog">
-    <h3 data-i18n="code.decode_zwave">Decode Z-Wave payload</h3>
-    <div id="zwave-decode-dialog-result" class="mt-decode-result"></div>
-    <div class="dialog-actions">
-      <button type="button" class="rm-btn rm-btn-primary" data-close data-i18n="action.close">Close</button>
+  <!-- Manage categories (tablet/phone entry point; boot.js) -->
+  <section class="sheet dialog sheet--sm-title" id="sheet-categories" role="dialog" aria-modal="true" aria-labelledby="categories-sheet-title" hidden>
+    <div class="sheet__grabber" aria-hidden="true"></div>
+    <header class="sheet__head sheet__head--center">
+      <span class="sheet__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-tags"/></svg></span>
+      <div class="sheet__heading"><h2 class="sheet__title" id="categories-sheet-title" data-i18n="nav.manage_categories">Manage categories</h2></div>
+      <button type="button" class="icon-btn" data-close data-i18n-tip="action.close" data-kbd="Esc"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-x"/></svg></button>
+    </header>
+    <div class="sheet__body" id="categories-body" style="padding-block:6px 12px"></div>
+    <footer class="sheet__foot">
+      <button type="button" class="btn" id="categories-new"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-plus"/></svg><span data-i18n="categories.dialog_new">New category</span></button>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn--primary" data-close data-i18n="action.done">Done</button>
+    </footer>
+  </section>
+
+  <!-- Keyboard shortcuts (boot.js) -->
+  <section class="sheet dialog sheet--sm-title" id="dialog-shortcuts" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title" hidden>
+    <header class="sheet__head sheet__head--center">
+      <span class="sheet__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-command"/></svg></span>
+      <div class="sheet__heading"><h2 class="sheet__title" id="shortcuts-title" data-i18n="shortcuts.title">Keyboard shortcuts</h2></div>
+      <button type="button" class="icon-btn" data-close data-i18n-tip="action.close" data-kbd="Esc"><svg class="icon" aria-hidden="true" focusable="false"><use href="./static/brand/icons.svg?v=3.0.0#i-x"/></svg></button>
+    </header>
+    <div class="sheet__body" id="shortcuts-body"></div>
+  </section>
+
+  <!-- Scanner overlay root (scanner-ui.js; full screen, own chrome) -->
+  <div class="scanner" id="scanner" role="dialog" aria-modal="true" data-i18n-aria-label="scan.title" aria-label="Scan code" data-scrim="none" hidden></div>
+
+  <!-- Confirm / alert (core.js: AM.confirm / AM.alert) — always last so it stacks on top -->
+  <section class="sheet dialog dialog--sm" id="dialog-confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-msg" hidden>
+    <div class="confirm__body">
+      <span class="confirm__icon" id="confirm-icon"></span>
+      <div class="stack" style="--gap:6px;min-inline-size:0">
+        <h2 class="confirm__title" id="confirm-title"></h2>
+        <p class="confirm__msg" id="confirm-msg"></p>
+      </div>
     </div>
-  </dialog>
+    <div class="sheet__foot confirm__foot">
+      <button type="button" class="btn btn--ghost" id="confirm-cancel"></button>
+      <button type="button" class="btn btn--primary" id="confirm-ok"></button>
+    </div>
+  </section>
+</div>
 
-  <dialog id="trash-dialog">
-    <form method="dialog">
-      <h3 data-i18n="trash.title">Trash</h3>
-      <p id="trash-empty" class="form-hint hidden" data-i18n="trash.empty">Trash is empty.</p>
-      <div id="trash-categories-section" class="hidden">
-        <p class="form-field-label" data-i18n="trash.section_categories">Categories</p>
-        <ul id="trash-category-list" class="trash-list"></ul>
-      </div>
-      <div id="trash-codes-section" class="hidden">
-        <p class="form-field-label" data-i18n="trash.section_codes">Codes</p>
-        <ul id="trash-code-list" class="trash-list"></ul>
-      </div>
-      <div class="dialog-actions">
-        <button type="button" id="btn-empty-trash" class="rm-btn rm-btn-danger" data-i18n="action.empty_trash">Empty bin</button>
-        <span class="dialog-actions-spacer"></span>
-        <button type="button" class="rm-btn rm-btn-primary" data-close data-i18n="action.close">Close</button>
-      </div>
-    </form>
-  </dialog>
+<input type="file" id="import-file" accept="application/json,.json" hidden>
 
-  <dialog id="confirm-dialog" class="confirm-dialog">
-    <form method="dialog">
-      <h3 id="confirm-title" data-i18n="confirm.title">Please confirm</h3>
-      <p id="confirm-message" class="confirm-message"></p>
-      <div class="dialog-actions">
-        <button type="button" class="rm-btn rm-btn-secondary" id="confirm-cancel" data-i18n="action.cancel">Cancel</button>
-        <button type="button" class="rm-btn rm-btn-danger" id="confirm-ok" data-i18n="action.delete">Delete</button>
-      </div>
-    </form>
-  </dialog>
-
-  <script>window.ANTIMATTER_LOCALE_BASE = "./static/locales/";</script>
-  <script src="./static/brand/js/i18n.js?v=1.0.39"></script>
-  <script src="./static/brand/js/homekit-payload.js?v=1.0.39"></script>
-  <script src="./static/brand/js/zwave-payload.js?v=1.0.39"></script>
-  <script src="./static/brand/js/matter-setup-payload.js?v=1.0.39"></script>
-  <script src="./static/brand/js/matter-scan.js?v=1.0.39"></script>
-  <script src="./static/brand/js/matter-scanner.js?v=1.0.39"></script>
-  <script src="./static/brand/js/vault-scan-ui.js?v=1.0.39"></script>
-  <script src="./static/brand/js/category-color-picker.js?v=1.0.39"></script>
-  <script src="./static/brand/js/category-icons.js?v=1.0.39"></script>
-  <script src="./static/brand/js/vault-cards.js?v=1.0.39"></script>
-  <script src="./static/brand/js/vault-share-ui.js?v=1.0.39"></script>
-  <script src="./static/app.js?v=1.0.39"></script>
+<!-- ============================== Scripts (classic, in order) ============================== -->
+<script>window.ANTIMATTER_LOCALE_BASE = "./static/locales/";</script>
+<script src="./static/brand/js/i18n.js?v=3.0.0"></script>
+<script src="./static/brand/js/matter-setup-payload.js?v=3.0.0"></script>
+<script src="./static/brand/js/homekit-payload.js?v=3.0.0"></script>
+<script src="./static/brand/js/zwave-payload.js?v=3.0.0"></script>
+<script src="./static/brand/js/matter-scan.js?v=3.0.0"></script>
+<script src="./static/brand/js/ha-bridge.js?v=3.0.0"></script>
+<script src="./static/brand/js/scan-engine.js?v=3.0.0"></script>
+<script src="./static/brand/js/category-icons.js?v=3.0.0"></script>
+<script src="./static/js/core.js?v=3.0.0"></script>
+<script src="./static/js/browse.js?v=3.0.0"></script>
+<script src="./static/js/detail.js?v=3.0.0"></script>
+<script src="./static/js/editor.js?v=3.0.0"></script>
+<script src="./static/js/dialogs.js?v=3.0.0"></script>
+<script src="./static/js/scanner-ui.js?v=3.0.0"></script>
+<script src="./static/js/boot.js?v=3.0.0"></script>
 </body>
 </html>

@@ -1,0 +1,23 @@
+configuration:
+  interface:
+    name: ממשק
+    fields:
+      language:
+        name: שפה
+        description: >-
+          שפת האפליקציה. "Auto" עוקבת אחר השפה של Home Assistant, ואחר כך אחר שפת
+          הדפדפן. כל שפה מוצגת בשמה שלה. שפה שנבחרה ישירות באפליקציה נשמרת לכל דפדפן
+          בנפרד וגוברת על הגדרה זו.
+      theme:
+        name: ערכת נושא
+        description: >-
+          ערכת צבעים: "Light" (בהירה) או "Dark" (כהה). "Auto" עוקבת אחר הגדרת המצב
+          הבהיר/הכהה של Home Assistant.
+  backup:
+    name: גיבוי
+    fields:
+      keep_count:
+        name: מספר הגיבויים לשמירה
+        description: >-
+          כמה עותקי גיבוי עם חותמת זמן לשמור בתיקיית התצורה של התוסף (נגישה דרך SAMBA).
+          גיבויים ישנים יותר נמחקים אוטומטית.

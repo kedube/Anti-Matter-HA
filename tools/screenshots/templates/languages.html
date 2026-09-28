@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en" data-theme="dark"><head><meta charset="utf-8"><title>languages</title>
+<link rel="stylesheet" href="common.css"><script src="common.js"></script>
+<style>
+  .grid { position: absolute; inset: 40px; display: grid; grid-template-columns: 640px 640px; grid-auto-rows: 442px; gap: 28px 32px; }
+  .cell { position: relative; }
+  .cell .window { position: absolute; left: 0; top: 0; width: 640px; height: 400px; }
+  .tag { position: absolute; left: 50%; transform: translateX(-50%); top: 412px; z-index: 2; display: flex; gap: 8px; align-items: center;
+         padding: 7px 14px 7px 12px; border-radius: 999px; background: rgba(21, 19, 58, .92); color: #F1F0FF;
+         box-shadow: 0 0 0 1px rgba(176, 162, 255, .45), 0 8px 24px -8px rgba(0, 0, 0, .8); font: 700 15px/1 var(--font-ui); }
+  .tag code { font: 600 12px/1 var(--font-mono); color: #B0A2FF; letter-spacing: .04em; }
+  .tag .rtl { font: 700 10px/1 var(--font-ui); letter-spacing: .08em; color: #080719; background: #5DE6F5; padding: 3px 6px; border-radius: 6px; }
+</style></head>
+<body><script>
+  const v = el("div", { class: "void" });
+  const g = el("div", { class: "grid" });
+  for (const s of DATA.shots) {
+    g.append(el("div", { class: "cell" },
+      el("div", { class: "window" }, el("img", { class: "shot", src: s.src })),
+      el("div", { class: "tag" }, el("span", { dir: "auto" }, s.name), el("code", {}, s.code), s.rtl ? el("span", { class: "rtl" }, "RTL") : null)));
+  }
+  document.body.append(v, g);
+  ready();
+</script></body></html>

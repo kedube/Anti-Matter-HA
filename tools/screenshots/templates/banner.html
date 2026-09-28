@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en" data-theme="dark"><head><meta charset="utf-8"><title>banner</title>
+<link rel="stylesheet" href="common.css"><script src="common.js"></script>
+<style>
+  /* 960 x 240 (rendered @2x). */
+  .void { border-radius: 0; }
+  .mark { position: absolute; left: 38px; top: 68px; width: 104px; height: 104px; border-radius: 26px; overflow: hidden;
+          box-shadow: 0 0 0 1px rgba(176, 162, 255, .35), 0 0 46px -4px rgba(124, 92, 255, .75); }
+  .mark img { width: 100%; height: 100%; display: block; }
+  .ring { position: absolute; left: 90px; top: 120px; width: 190px; height: 64px; transform: translate(-50%, -50%) rotate(-12deg);
+          border-radius: 50%; border: 1.2px solid rgba(176, 162, 255, .35); }
+  .text { position: absolute; left: 172px; top: 44px; }
+  .word { font: 300 54px/1 var(--font-ui); letter-spacing: -.035em; color: #BDB9E4; white-space: nowrap; }
+  .word b { font-weight: 800; color: #fff; }
+  .tagline { margin-top: 12px; font: 600 17.5px/1.3 var(--font-ui); color: #D9D5F7; letter-spacing: -.005em; }
+  .protos { margin-top: 20px; display: flex; align-items: center; gap: 17px; }
+  .protos img { display: block; filter: brightness(0) invert(1); opacity: .78; }
+  .protos .dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(176, 162, 255, .55); }
+  .fan { position: absolute; right: 44px; top: 30px; width: 236px; height: 180px; }
+  .tile { position: absolute; top: 18px; width: 104px; padding: 9px 9px 10px; border-radius: 14px; background: #fff;
+          box-shadow: 0 0 0 1px rgba(255, 255, 255, .9), 0 18px 34px -12px rgba(0, 0, 0, .9), 0 0 30px -6px var(--g); }
+  .tile .head { height: 20px; display: flex; align-items: center; justify-content: center; }
+  .tile .head img { max-height: 15px; max-width: 86px; }
+  .tile .qr { margin-top: 6px; }
+  .tile .qr svg { display: block; width: 86px; height: 86px; }
+  .tile .code { margin-top: 6px; text-align: center; font: 700 10.5px/1 var(--font-mono); color: #0B0B10; letter-spacing: .02em; }
+</style></head>
+<body><script>
+  const L = DATA.logos;
+  const v = el("div", { class: "void" });
+  v.append(orbits(960, 240, 700, 120, .55, false));
+  const tile = (logo, h, qr, code, style, glow, align) => el("div", { class: "tile", style: Object.assign({ "--g": glow }, style) },
+    el("div", { class: "head", style: align ? { justifyContent: align, paddingInline: "2px" } : {} }, el("img", { src: logo, style: { height: h + "px" } })),
+    el("div", { class: "qr", html: qr }), el("div", { class: "code" }, code));
+  const Q = DATA.qr;
+  const fan = el("div", { class: "fan" },
+    tile(L.homekit, 13, Q.homekit.svg, Q.homekit.code, { left: "0px", transform: "rotate(-11deg) translateY(10px)" }, "rgba(255,185,56,.55)", "flex-start"),
+    tile(L.zwave, 17, Q.zwave.svg, Q.zwave.code, { left: "132px", transform: "rotate(10deg) translateY(10px)" }, "rgba(90,143,255,.55)"),
+    tile(L.matter, 14, Q.matter.svg, Q.matter.code, { left: "66px", top: "4px", zIndex: 2 }, "rgba(47,211,227,.6)"));
+  const p = el("div", { class: "protos" });
+  [[L.matter, 15], [L.homekit, 16], [L.zwave, 19], [L.zigbee, 16], [L.tuya, 17]].forEach(([src, h], i) => {
+    if (i) p.append(el("span", { class: "dot" }));
+    p.append(el("img", { src, style: { height: h + "px" } }));
+  });
+  document.body.append(v, el("div", { class: "ring" }), el("div", { class: "mark" }, el("img", { src: DATA.icon })),
+    el("div", { class: "text" },
+      el("div", { class: "word" }, "Anti-", el("b", {}, "Matter")),
+      el("div", { class: "tagline" }, DATA.tagline),
+      p),
+    fan);
+  ready();
+</script></body></html>

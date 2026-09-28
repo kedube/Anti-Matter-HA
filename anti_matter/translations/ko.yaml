@@ -1,0 +1,20 @@
+configuration:
+  interface:
+    name: 인터페이스
+    fields:
+      language:
+        name: 언어
+        description: >-
+          앱 표시 언어입니다. ‘Auto’는 Home Assistant의 언어를 따르고, 그다음으로 브라우저 언어를 따릅니다. 각 언어는 해당 언어의
+          고유 이름으로 표시됩니다. 앱에서 직접 선택한 언어는 브라우저별로 저장되며 이 설정보다 우선합니다.
+      theme:
+        name: 테마
+        description: >-
+          색상 테마: ‘Light’(라이트) 또는 ‘Dark’(다크). ‘Auto’는 Home Assistant의 라이트/다크 모드 설정을 따릅니다.
+  backup:
+    name: 백업
+    fields:
+      keep_count:
+        name: 보관할 백업 수
+        description: >-
+          애드온 설정 폴더(SAMBA로 접근 가능)에 보관할 타임스탬프 백업 사본의 수입니다. 오래된 백업은 자동으로 삭제됩니다.

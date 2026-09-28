@@ -1,0 +1,107 @@
+/* =====================================================================
+   Anti-Matter base: fonts, reset, typography, focus, a11y, motion prefs.
+   Logical properties only (RTL-ready). No physical left/right anywhere.
+   ===================================================================== */
+
+/* Fonts: @font-face rules live in ../vendor/fonts.css (loaded before this file). */
+
+/* ---------- Reset ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; scrollbar-gutter: stable; }
+html:not([data-theme]) body { background: Canvas; color: CanvasText; } /* pre-boot safety net */
+body {
+  min-block-size: 100vh;   /* fallback for WebViews without dvh */
+  min-block-size: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-body);
+  font-feature-settings: "cv11" 1, "ss01" 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+img, svg, video, canvas { display: block; max-inline-size: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
+button { cursor: pointer; background: none; border: 0; padding: 0; text-align: inherit; }
+button:disabled { cursor: not-allowed; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+h1, h2, h3, h4 { font-weight: var(--fw-bold); line-height: var(--lh-tight); letter-spacing: -.01em; text-wrap: balance; }
+p { text-wrap: pretty; }
+ul[role], ol[role] { list-style: none; padding: 0; }
+table { border-collapse: collapse; }
+[hidden] { display: none !important; }
+::selection { background: var(--accent-soft); color: var(--text); }
+
+/* ---------- Icons ---------- */
+/* <svg class="icon" aria-hidden="true"><use href="./static/brand/icons.svg?v=3.0.0#i-scan-line"/></svg>  (AM.icon builds these) */
+.icon {
+  inline-size: 1.25em; block-size: 1.25em; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+}
+.icon--sm { inline-size: 16px; block-size: 16px; }
+.icon--md { inline-size: 20px; block-size: 20px; }
+.icon--lg { inline-size: 24px; block-size: 24px; }
+.icon--fill { fill: currentColor; stroke: none; }     /* MDI category glyphs (inside .cat-mark only) */
+[dir="rtl"] .icon--flip-rtl { transform: scaleX(-1); }   /* directional arrows/chevrons only */
+
+/* ---------- Typography helpers ---------- */
+.mono, code, kbd, samp { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-feature-settings: "zero" 0; }
+/* Codes, payloads and hex are always LTR islands, even in RTL UIs. */
+.ltr, .code-text { direction: ltr; unicode-bidi: isolate; }
+.overline {
+  font-size: var(--fs-micro); font-weight: var(--fw-bold); letter-spacing: var(--tracking-overline);
+  text-transform: uppercase; line-height: 1.2;
+}
+:lang(ja) .overline, :lang(zh) .overline, :lang(ko) .overline,
+:lang(ar) .overline, :lang(he) .overline { text-transform: none; letter-spacing: 0; font-size: var(--fs-caption); }
+/* Machine-value keys in readouts (VENDOR ID, PASSCODE…) use the mono voice; section kickers use .overline. */
+.key {
+  font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); line-height: 1.2;
+}
+:lang(ja) .key, :lang(zh) .key, :lang(ko) .key, :lang(ar) .key, :lang(he) .key,
+:lang(de) .key, :lang(ru) .key, :lang(uk) .key { font-family: var(--font-ui); text-transform: none; letter-spacing: .02em; font-size: var(--fs-caption); }
+.muted { color: var(--text-2); }
+.subtle { color: var(--text-3); }
+.num { font-variant-numeric: tabular-nums; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-inline-size: 0; }
+.clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ---------- Focus (visible, 3:1+, never removed without replacement) ---------- */
+:focus { outline: none; }
+:focus-visible { outline: 2.5px solid var(--focus); outline-offset: 2px; border-radius: inherit; }
+.focus-ring-inset:focus-visible { outline-offset: -3px; }
+
+/* ---------- Accessibility utilities ---------- */
+.sr-only {
+  position: absolute !important; inline-size: 1px; block-size: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+.skip-link { position: absolute; inset-inline-start: var(--s-3); inset-block-start: -100px; z-index: 999;
+  background: var(--surface); color: var(--text); padding: var(--s-2) var(--s-3); border-radius: var(--r-md); box-shadow: var(--sh-2); }
+.skip-link:focus { inset-block-start: var(--s-3); }
+
+/* Touch: every compact control gets an invisible 44px hit area (see .hit44 in components) */
+@media (pointer: coarse) {
+  html { --hit: 44px; }
+}
+
+/* ---------- Scrollbars (thin, themed) ---------- */
+* { scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+
+/* ---------- Motion preferences ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important; animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important; scroll-behavior: auto !important;
+  }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+/* Keyboard legends are desktop-only affordances */
+@media (hover: none) { .kbd-hint, kbd.hint { display: none !important; } }

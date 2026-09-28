@@ -1,0 +1,109 @@
+/* Anti-Matter 3.0 — css/browse.css: styles owned by the browse module (additions on top of
+   tokens/base/components/layout/scanner/app.css). Tokens + logical properties only,
+   no per-theme rules, no color-mix, no :has() dependency. */
+
+/* User text is an inline <bdi dir="auto"> inside boxes that keep the UI direction, so an Arabic
+   name in an English list (or vice versa) keeps its bidi order without jumping to the far edge. */
+
+/* ---------------------------- View bar ---------------------------- */
+.viewbar__title h1 { overflow: hidden; text-overflow: ellipsis; min-inline-size: 0; }
+.viewbar__status { font-variant-numeric: tabular-nums; }
+
+/* ---------------------------- Category chip row ---------------------------- */
+.cat-row__manage { --ib: 40px; border-radius: var(--r-pill); flex: none; }
+.cat-row .chip { -webkit-touch-callout: none; }
+
+/* ---------------------------- Insight strip ---------------------------- */
+.insight__total { min-inline-size: 96px; }
+.spectrum__hint { font-size: var(--fs-caption); }
+.insight__total > .insight__cap { display: block; }
+.spectrum__legend .legend-btn { justify-content: flex-start; }
+.usage-list button { position: relative; margin-inline: -6px; padding-inline: 6px; text-align: start; }
+.usage-list button:hover { background: var(--surface-3); color: var(--text); }
+.usage-list button[aria-pressed="true"] { background: var(--accent-soft); color: var(--text); }
+@media (pointer: coarse) { .usage-list button::after { content: ""; position: absolute; inset: -8px 0; } }
+.spares { cursor: pointer; }
+.spares[aria-pressed="true"] { border-style: solid; border-color: var(--accent-line); background: var(--accent-soft); }
+.spares__txt small { display: inline-flex; align-items: center; gap: 2px; }
+.spares__txt small .icon { inline-size: 12px; block-size: 12px; }
+.spares__fan > span .icon { inline-size: 18px; block-size: 18px; color: #8A8A96; }
+.insight-thin__num { display: inline-flex; align-items: baseline; white-space: nowrap; }
+
+/* ---------------------------- Filter row + popovers ---------------------------- */
+.filters .chip .chip__count[hidden] { display: none; }
+.filter-pop__seg { padding: 12px; }
+.filter-pop__proto { text-transform: none; letter-spacing: 0; font-size: var(--fs-body); font-weight: var(--fw-medium); color: var(--text); }
+.opt__label { display: inline-flex; align-items: center; gap: 8px; min-inline-size: 0; }
+.opt__label .icon { color: var(--text-3); }
+.opt > span:not(.opt__n) { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.filter-pop__empty { padding: 12px 10px; color: var(--text-3); font-size: var(--fs-small); }
+@media (hover: none), (max-width: 720px) { .kbd-hint { display: none; } }
+
+/* Phone filter sheet */
+.fsheet__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.fsheet__proto { text-transform: none; letter-spacing: 0; font-size: var(--fs-small); color: inherit; }
+.fsheet__group--drills { gap: 0; }
+.fsheet__note { font-size: var(--fs-caption); color: var(--text-3); padding-block: 8px 12px; }
+.fsheet__drill-head { display: flex; align-items: center; gap: 8px; padding-block: 12px 8px; }
+.fsheet__drill-head h3 { flex: 1; min-inline-size: 0; font-size: var(--fs-title-3); font-weight: var(--fw-bold); }
+.fsheet__search { margin-block-end: 8px; }
+.fsheet__search .input { min-block-size: 44px; }
+.fsheet__list { display: grid; gap: 1px; padding-block-end: 12px; }
+.drill .v { max-inline-size: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.drill .v.is-set { color: var(--accent); font-weight: var(--fw-semibold); }
+
+/* ---------------------------- Cards ---------------------------- */
+/* The select checkbox is the LAST tab stop (it sits at the end of the article in the DOM),
+   drawn over the tile's top-start corner. */
+.code-card > .code-card__select { inset-block-start: 6px; inset-inline-start: 6px; }
+.grid--compact .code-card > .code-card__select { inset-block-start: 4px; inset-inline-start: 4px; }
+/* Grid zoom above 100%: the white tile (and its QR) grows with the column. */
+.grid:not(.grid--compact) .code-card__tile .qr-tile { --tile-w: calc(148px * var(--tile-z, 1)); block-size: calc(184px * var(--tile-z, 1)); }
+@media (max-width: 380px) {
+  .grid:not(.grid--compact) .code-card__tile .qr-tile { --tile-w: 132px; block-size: 172px; }
+}
+.code-card__foot .code-pill { cursor: text; }
+.code-card, #codes-tbody tr { scroll-margin-block: calc(var(--appbar-h) + 12px) 96px; }
+@media (pointer: coarse) {
+  .code-card, #codes-tbody tr, .label, .cat-row .chip, .nav-row {
+    -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
+  }
+  #view-cards, #view-labels { touch-action: pan-x pan-y; }
+}
+
+/* ---------------------------- Labels view ---------------------------- */
+.labels-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.labels-tools__group { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.labels-tools .check-lbl {
+  display: inline-flex; align-items: center; gap: 8px; min-block-size: 36px; padding-inline: 8px;
+  font-weight: var(--fw-semibold); font-size: var(--fs-small); color: var(--text-2); cursor: pointer; border-radius: var(--r-sm);
+}
+.labels-tools .check-lbl:hover { color: var(--text); }
+@media (pointer: coarse) { .labels-tools .check-lbl { min-block-size: 44px; } }
+.labels-tools__hint { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-caption); color: var(--text-3); margin-inline-end: 8px; }
+.label-wrap { display: flex; }
+.label__qr { display: grid; place-items: center; inline-size: 100%; }
+.label__back dd.is-text { font-family: var(--font-ui); direction: inherit; unicode-bidi: normal; }
+.label__back .label__dsk { text-align: start; }
+.label-caption__name.is-off { visibility: hidden; }
+.label-caption .icon-btn, .label-caption .btn { flex: none; }
+
+/* ---------------------------- Table ---------------------------- */
+/* The wrapper scrolls on both axes so the header (and the identity/actions columns) stay sticky. */
+#view-table { max-block-size: calc(100vh - var(--appbar-h) - 32px); max-block-size: calc(100dvh - var(--appbar-h) - 32px); overscroll-behavior: contain; }
+@media (max-width: 720px) {
+  #view-table { max-block-size: calc(100vh - var(--appbar-h) - var(--dock-h) - 48px); max-block-size: calc(100dvh - var(--appbar-h) - var(--dock-h) - 48px); }
+}
+#codes-tbody tr { cursor: default; }
+.table .name-cell__code { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-3); direction: ltr; unicode-bidi: isolate; }
+.table .cell-row { display: inline-flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+.table .cell-row .icon { color: var(--text-3); }
+.table .cell-date { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-3); }
+.table .mini-qr > .icon { inline-size: 18px; block-size: 18px; color: #8A8A96; }
+
+/* ---------------------------- Print ---------------------------- */
+@media print {
+  .labels-tools { display: none !important; }
+  .label-caption__name.is-off { display: none; }
+  .label-wrap { display: block; break-inside: avoid; }
+}

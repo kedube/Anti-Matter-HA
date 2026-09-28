@@ -1,0 +1,24 @@
+configuration:
+  interface:
+    name: Oberfläche
+    fields:
+      language:
+        name: Sprache
+        description: >-
+          Sprache der App. „Auto“ folgt der Sprache von Home Assistant, danach der des
+          Browsers. Jede Sprache ist unter ihrem eigenen Namen aufgeführt. Eine direkt
+          in der App gewählte Sprache wird pro Browser gespeichert und hat Vorrang vor
+          dieser Einstellung.
+      theme:
+        name: Design
+        description: >-
+          Farbschema: „Light“ (hell) oder „Dark“ (dunkel). „Auto“ folgt der
+          Hell/Dunkel-Einstellung von Home Assistant.
+  backup:
+    name: Backup
+    fields:
+      keep_count:
+        name: Aufzubewahrende Backups
+        description: >-
+          Wie viele Backup-Kopien mit Zeitstempel im Konfigurationsordner des Add-ons
+          (per SAMBA erreichbar) aufbewahrt werden. Ältere werden automatisch gelöscht.

@@ -1,5 +1,5 @@
 name: Anti-Matter
-version: "2.0.5"
+version: "3.0.0"
 slug: anti_matter
 description: Store, organize and back up your Matter, Z-Wave, Zigbee, HomeKit and Tuya pairing codes and QR payloads.
 url: https://github.com/Cl3tus/Anti-Matter-HA
@@ -22,16 +22,20 @@ homeassistant_api: true
 hassio_api: false
 
 # The vault + timestamped backups are stored in the add-on config folder,
-# reachable over SAMBA at \\<HA-IP>\app_configs\<slug> and included in HA backups.
+# reachable over SAMBA at \\<HA-IP>\app_configs\<repo-hash>_anti_matter and included in HA backups.
 map:
   - app_config:rw
   - media:rw
 
 # --- User options (Configuration tab; rendered as dropdowns with section headers) ---
-#   Language : Auto (follow HA) | Nederlands | English
+#   Language : Auto (follow HA, then the browser) | 24 languages, each listed by its
+#              own name (HA shows list() values untranslated). options.py
+#              LANGUAGE_OPTION_NAMES maps each name to its code (en, pt-BR, zh-Hant, ...).
+#              Keep "Auto", "English" and "Nederlands" byte-identical: existing
+#              options.json files are validated against this list.
 #   Theme    : Auto (follow HA) | Light | Dark
-# Labels/descriptions are translated per HA language via translations/*.yaml
-# (configuration.<group>.fields.*).
+# Labels/descriptions are translated per HA language via translations/<code>.yaml
+# (configuration.<group>.fields.*). File names must be HA language keys (pt-BR, zh-Hans).
 options:
   interface:
     language: Auto
@@ -40,7 +44,7 @@ options:
     keep_count: 10
 schema:
   interface:
-    language: list(Auto|Nederlands|English)
+    language: "list(Auto|English|Čeština|Dansk|Deutsch|Español|Français|Italiano|Magyar|Nederlands|Norsk bokmål|Polski|Português (Brasil)|Português (Portugal)|Suomi|Svenska|Türkçe|Русский|Українська|עברית|العربية|日本語|한국어|简体中文|繁體中文)"
     theme: list(Auto|Light|Dark)
   backup:
     keep_count: int(1,100)

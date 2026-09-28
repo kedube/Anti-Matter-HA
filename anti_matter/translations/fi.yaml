@@ -1,0 +1,23 @@
+configuration:
+  interface:
+    name: Käyttöliittymä
+    fields:
+      language:
+        name: Kieli
+        description: >-
+          Sovelluksen kieli. ”Auto” käyttää Home Assistantin kieltä ja sen jälkeen
+          selaimen kieltä. Kukin kieli näkyy omalla nimellään. Suoraan sovelluksessa
+          valittu kieli tallennetaan selainkohtaisesti, ja se ohittaa tämän asetuksen.
+      theme:
+        name: Teema
+        description: >-
+          Väriteema: ”Light” (vaalea) tai ”Dark” (tumma). ”Auto” noudattaa Home
+          Assistantin vaalean/tumman tilan asetusta.
+  backup:
+    name: Varmuuskopiointi
+    fields:
+      keep_count:
+        name: Säilytettävät varmuuskopiot
+        description: >-
+          Kuinka monta aikaleimattua varmuuskopiota säilytetään lisäosan asetuskansiossa
+          (käytettävissä SAMBAn kautta). Vanhemmat poistetaan automaattisesti.

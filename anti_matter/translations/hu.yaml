@@ -1,0 +1,25 @@
+configuration:
+  interface:
+    name: Felület
+    fields:
+      language:
+        name: Nyelv
+        description: >-
+          Az alkalmazás nyelve. Az „Auto” a Home Assistant nyelvét követi, utána a
+          böngészőét. Minden nyelv a saját nevén szerepel. Az alkalmazásban közvetlenül
+          kiválasztott nyelvet a böngésző megjegyzi, és ez elsőbbséget élvez ezzel a
+          beállítással szemben.
+      theme:
+        name: Téma
+        description: >-
+          Színtéma: „Light” (világos) vagy „Dark” (sötét). Az „Auto” a Home Assistant
+          világos/sötét beállítását követi.
+  backup:
+    name: Biztonsági mentés
+    fields:
+      keep_count:
+        name: Megőrzött biztonsági mentések
+        description: >-
+          Hány időbélyeggel ellátott biztonsági másolat maradjon meg a bővítmény
+          konfigurációs mappájában (SAMBA-n keresztül elérhető). A régebbiek
+          automatikusan törlődnek.

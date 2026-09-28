@@ -1,0 +1,19 @@
+configuration:
+  interface:
+    name: インターフェース
+    fields:
+      language:
+        name: 言語
+        description: >-
+          アプリの表示言語です。「Auto」では Home Assistant の言語、次にブラウザーの言語に従います。各言語はその言語自体の名称で表示されます。アプリ内で直接選んだ言語はブラウザーごとに記憶され、この設定より優先されます。
+      theme:
+        name: テーマ
+        description: >-
+          配色テーマです。「Light」（ライト）または「Dark」（ダーク）を選べます。「Auto」では Home Assistant のライト／ダーク設定に従います。
+  backup:
+    name: バックアップ
+    fields:
+      keep_count:
+        name: 保持するバックアップ数
+        description: >-
+          アドオンの設定フォルダー（SAMBA 経由でアクセス可能）に保持する、タイムスタンプ付きバックアップの数です。古いものは自動的に削除されます。

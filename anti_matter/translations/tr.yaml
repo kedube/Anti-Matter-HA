@@ -1,0 +1,24 @@
+configuration:
+  interface:
+    name: Arayüz
+    fields:
+      language:
+        name: Dil
+        description: >-
+          Uygulamanın dili. “Auto”, önce Home Assistant dilini, ardından tarayıcınızın
+          dilini kullanır. Her dil kendi adıyla listelenir. Doğrudan uygulamada seçilen
+          dil her tarayıcı için ayrı hatırlanır ve bu ayarın önüne geçer.
+      theme:
+        name: Tema
+        description: >-
+          Renk teması: “Light” (açık) veya “Dark” (koyu). “Auto”, Home Assistant’ın
+          açık/koyu ayarını izler.
+  backup:
+    name: Yedekleme
+    fields:
+      keep_count:
+        name: Saklanacak yedek sayısı
+        description: >-
+          Eklentinin yapılandırma klasöründe (SAMBA üzerinden erişilebilir) zaman
+          damgalı kaç yedek kopyanın saklanacağı. Daha eski yedekler otomatik olarak
+          silinir.

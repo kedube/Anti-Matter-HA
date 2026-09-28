@@ -1,0 +1,167 @@
+/* =====================================================================
+   Anti-Matter 3.0 — css/sheets.css (detail.js, editor.js, dialogs.js)
+   Detail sheet, Present mode, Editor, Category / Trash / Backups /
+   Import dialogs. Tokens only, logical properties only, no per-theme
+   rules, no color-mix, no `translate` property.
+   ===================================================================== */
+
+/* ---------- Shared ---------- */
+@keyframes am-spin { to { transform: rotate(360deg); } }
+.am-spin { animation: am-spin 900ms linear infinite; }
+@media (prefers-reduced-motion: reduce) { .am-spin { animation: none; } }
+.tag.is-off { color: var(--text-3); }
+.pills__set { display: flex; flex-wrap: wrap; gap: 6px; }
+.pills__note { font-size: var(--fs-small); align-self: center; }
+.readout .pills { align-items: center; }
+.readout__src { align-items: flex-start; }
+.readout__src .icon { margin-block-start: 2px; flex: none; }
+.readout__dsk { display: block; font-size: 14px; line-height: 1.6; white-space: nowrap; overflow-x: auto; }
+.readout__dsk u { text-decoration-thickness: 2px; text-underline-offset: 3px; font-weight: 800; }
+
+/* ---------- Detail sheet ---------- */
+.detail .sheet__title { overflow-wrap: anywhere; }
+.detail .detail__meta .status { font-size: var(--fs-small); }
+.detail__decoded { scroll-margin-block-start: 12px; border-radius: var(--r-lg); }
+.detail__decoded:focus { outline: none; }
+.detail__decoded:focus-visible { outline: 2.5px solid var(--focus); outline-offset: 6px; }
+.detail .stage { min-block-size: 300px; }
+.setup-code__value--dsk { display: block; font-size: 17px; line-height: 1.55; white-space: nowrap; overflow-x: auto; }
+.setup-code__value--dsk u { text-decoration-thickness: 2px; text-underline-offset: 4px; font-weight: 800; }
+.setup-code__none { font-size: var(--fs-body); }
+.fact-conn { display: inline-flex; align-items: center; gap: 6px; margin-inline-end: 8px; }
+.facts dd .tag { max-inline-size: 100%; }
+.detail .notes { overflow-wrap: anywhere; }
+.detail .action-tile:disabled { opacity: .5; cursor: not-allowed; }
+.detail .ha-row .icon-btn { flex: none; }
+@media (max-width: 420px) { .ha-row > .icon-btn { margin-inline-start: auto; } }
+@media (max-width: 720px) {
+  .detail .stage { min-block-size: 0; padding-block: 22px; }
+  .setup-code__value { font-size: 26px; }
+}
+
+/* ---------- Present mode: the label as large as the screen allows ---------- */
+.present .label__face { padding: calc(var(--label-w) * .06) calc(var(--label-w) * .05) calc(var(--label-w) * .05); gap: calc(var(--label-w) * .03); }
+.present .label__head { min-block-size: calc(var(--label-w) * .14); }
+.present .label__head .wordmark--matter { block-size: calc(var(--label-w) * .085); }
+.present .label__head .wordmark--zwave { block-size: calc(var(--label-w) * .13); }
+.present .label__head .wordmark--zigbee { block-size: calc(var(--label-w) * .09); }
+.present .label__head .wordmark--tuya { block-size: calc(var(--label-w) * .1); }
+.present .label__head .wordmark--text { font-size: calc(var(--label-w) * .07); }
+.present .label__head .hk-code { font-size: calc(var(--label-w) * .075); }
+.present .label__code { font-size: calc(var(--label-w) * .085); }
+.present .label__dsk { font-size: calc(var(--label-w) * .052); }
+.present .qr-placeholder { font-size: 14px; }
+.present__stage { touch-action: pan-y; overflow: hidden; }
+.present__foot .icon-btn:disabled { opacity: .35; }
+.present__bar .tag { flex: none; }
+
+/* ---------- Editor ---------- */
+.editor__dup { margin-block-end: 18px; }
+.editor__grid .field__label .aside.autofill { color: var(--accent); }
+.detected b { color: var(--accent); font-weight: var(--fw-bold); }
+.editor__section > h3 .detected { margin-inline-start: auto; }
+.input-group--badge > .input { padding-inline-start: 12px; padding-inline-end: 88px; }
+.input-group--badge > .input-badge { pointer-events: none; }
+.ed-group textarea.input--mono, .ed-group .textarea.input--mono { resize: vertical; min-block-size: 64px; overflow-wrap: anywhere; word-break: break-all; }
+.editor__strip-status { margin-block-start: -4px; }
+.input--dsk { font-size: 14px; letter-spacing: 0; }
+@media (pointer: coarse) { .input--dsk { font-size: 15px; } }
+.editor__strip-status.is-busy .icon { animation: am-spin 900ms linear infinite; }
+@media (prefers-reduced-motion: reduce) { .editor__strip-status.is-busy .icon { animation: none; } }
+.editor__readouts:empty { display: none; }
+.editor__readouts-empty { padding: 12px 14px; border-radius: var(--r-lg); border: 1px dashed var(--line-2); align-items: flex-start; }
+.editor__preview .readout--wide .pills { gap: 4px; }
+.editor__preview .readout--wide .tag { font-size: var(--fs-micro); }
+.editor__cats .chip { max-inline-size: 100%; }
+.editor__cats .chip span { overflow: hidden; text-overflow: ellipsis; }
+.editor__details > summary { display: flex; align-items: center; gap: 10px; }
+.editor__details > summary .tag { font-weight: var(--fw-semibold); }
+.editor__details-body { padding-block: 4px 8px; }
+.editor .select-wrap .select { inline-size: 100%; }
+.editor .field-row > .field { min-inline-size: 0; }
+.editor .fill-strip .btn { flex: none; }
+@media (max-width: 520px) { .editor .fill-strip .btn { flex: 1; } }
+
+/* HA device combobox (custom listbox; never a <datalist>) */
+.combobox .input { background: var(--sunk); }
+.combobox__list { max-inline-size: none; min-inline-size: 0; max-block-size: 300px; overflow: auto; overscroll-behavior: contain; }
+.combobox__opt { cursor: pointer; }
+.combobox__opt > .icon { color: var(--text-3); }
+.combobox__opt[aria-selected="true"] > .icon { color: var(--accent); }
+.combobox__txt { display: grid; min-inline-size: 0; }
+.combobox__txt b { font-weight: var(--fw-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.combobox__txt small { color: var(--text-3); font-size: var(--fs-caption); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.combobox__empty { padding: 10px 12px; color: var(--text-3); font-size: var(--fs-small); list-style: none; }
+.combobox__legend { list-style: none; flex-wrap: wrap; }
+.combobox__legend > span { display: inline-flex; align-items: center; gap: 4px; }
+.combobox__legend .kbd { display: inline-grid; }
+@media (hover: none), (max-width: 720px) { .combobox__legend { display: none; } }
+.suggest--linked { border-style: solid; }
+.editor .suggest .btn { flex: none; }
+@media (max-width: 420px) { .editor .suggest .btn { flex: 1 0 100%; } }
+
+/* ---------- Category editor ---------- */
+.cat-preview { block-size: auto; padding-block: 4px; padding-inline: 4px 10px; max-inline-size: 220px; }
+.cat-preview .cat-mark { --cm: 22px; margin-inline-start: 0; }
+.cat-native-color {
+  inline-size: 44px; block-size: 36px; padding: 0; border: 1px solid var(--line-2); border-radius: 10px;
+  background: var(--surface); cursor: pointer; flex: none;
+}
+.cat-native-color::-webkit-color-swatch-wrapper { padding: 3px; }
+.cat-native-color::-webkit-color-swatch { border: 0; border-radius: 7px; }
+.cat-native-color::-moz-color-swatch { border: 0; border-radius: 7px; }
+#dialog-category .swatch { cursor: pointer; }
+#dialog-category .icon-grid { max-block-size: 220px; padding: 2px; }
+#dialog-category .icon-grid button:focus-visible { outline: 2.5px solid var(--focus); outline-offset: 2px; }
+@media (max-width: 560px) { #dialog-category .icon-grid { max-block-size: 180px; } }
+
+/* ---------- Trash ---------- */
+#dialog-trash .sheet__body { padding-block: 6px 12px; }
+.trash-list { display: grid; }
+.trash-list:focus { outline: none; }
+.trash-qr {
+  inline-size: 40px; block-size: 40px; border-radius: 8px; background: #fff; display: grid; place-items: center;
+  box-shadow: 0 0 0 1px var(--label-ring); color: #8A8A96; flex: none;
+}
+.trash-qr .icon { inline-size: 20px; block-size: 20px; }
+.trash-dup { color: var(--warn); font-weight: var(--fw-semibold); }
+.trash-purge { color: var(--danger); }
+.trash-purge:hover { background: var(--danger-soft); color: var(--danger); }
+.trash-none { padding-block: 16px; text-align: center; }
+.trash-empty { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 28px 12px 20px; }
+.trash-empty .sheet__icon { inline-size: 52px; block-size: 52px; border-radius: 16px; }
+.trash-empty b { font-size: var(--fs-title-3); }
+#dialog-trash .list-row .cat-mark { margin-inline: 2px; }
+@media (max-width: 480px) {
+  #dialog-trash .list-row { grid-template-columns: auto minmax(0, 1fr); }
+  #dialog-trash .list-row__actions { grid-column: 1 / -1; justify-content: flex-end; }
+}
+
+/* ---------- Backups ---------- */
+.bk-dot { display: inline-block; inline-size: 8px; block-size: 8px; border-radius: 50%; background: var(--text-3); margin-inline-end: 6px; vertical-align: middle; }
+.bk-dot--on { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); }
+#dialog-backup .stepper { align-self: start; }
+#dialog-backup .stepper input { font-family: var(--font-mono); color: var(--text); }
+#dialog-backup .stepper input:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; border-radius: 8px; }
+#dialog-backup .field-row:empty { display: none; }
+#backup-now[aria-busy="true"] { cursor: progress; }
+
+/* ---------- Import & export ---------- */
+.io-pick { display: grid; gap: 8px; }
+.io-new { color: var(--ok); font-weight: var(--fw-bold); }
+.choice { cursor: pointer; align-content: start; }
+.choice--danger b { color: var(--danger); }
+.choice b .icon { inline-size: 18px; block-size: 18px; }
+#dialog-import .notice__title { overflow-wrap: anywhere; }
+@media (max-width: 420px) { .choice-cards { grid-template-columns: 1fr; } }
+
+/* ---------- Confirm: list of affected codes ---------- */
+.confirm-trash { display: grid; gap: 8px; }
+.confirm-list { margin: 0; padding-inline-start: 18px; display: grid; gap: 2px; color: var(--text); font-weight: var(--fw-semibold); white-space: normal; }
+.confirm-list li { overflow-wrap: anywhere; }
+
+/* ---------- RTL: LTR machine values sit at the logical start (right) of RTL blocks ---------- */
+[dir="rtl"] .readout__value:not(.readout__value--text) { justify-content: flex-end; }
+[dir="rtl"] .setup-code__value, [dir="rtl"] .setup-code__raw .mono, [dir="rtl"] .readout__dsk { text-align: end; }
+/* The code input is dir=ltr inside an RTL group: its badge sits on the physical left, so pad that side */
+[dir="rtl"] .input-group--badge > .input { padding-inline: 88px 12px; }

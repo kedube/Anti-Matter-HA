@@ -1,7 +1,7 @@
 r"""JSON file persistence for the Anti-Matter vault.
 
 Data lives under STORAGE_DIR (set to the add-on config folder `/config` by run.sh, which
-Home Assistant exposes over Samba at \\<HA-IP>\app_configs\<slug>). Falls back to /data.
+Home Assistant exposes over Samba at \\<HA-IP>\app_configs\<repo-hash>_anti_matter). Falls back to /data.
 """
 
 from __future__ import annotations
@@ -37,6 +37,7 @@ class VaultStorage:
         self.bin_path = self.data_dir / BIN_FILENAME
         self._lock = Lock()
         self._migrate_inline_trash()
+        self._repair_homekit_pairing()
 
     def load(self) -> Vault:
         with self._lock:
@@ -90,6 +91,31 @@ class VaultStorage:
             bin_data.categories.extend(c for c in trashed_cats if c.id not in existing_cat_ids)
             bin_data.codes.extend(c for c in trashed_codes if c.id not in existing_code_ids)
             self._write_bin_unlocked(bin_data)
+
+    def _repair_homekit_pairing(self) -> None:
+        """Fix HomeKit pairing codes saved by the pre-3.0 31-bit-mask decoder (vault + bin)."""
+        from homekit_payload import repair_legacy_pairing
+
+        def repair(codes) -> bool:
+            changed = False
+            for code in codes:
+                if code.code_type != "homekit":
+                    continue
+                fixed = repair_legacy_pairing(code.manual_code, code.qr_payload)
+                if fixed:
+                    code.manual_code = fixed
+                    changed = True
+            return changed
+
+        with self._lock:
+            if self.path.exists():
+                vault = Vault.model_validate(json.loads(self.path.read_text(encoding="utf-8")))
+                if repair(vault.codes):
+                    self._write_unlocked(vault)
+            if self.bin_path.exists():
+                bin_data = self._load_bin_unlocked()
+                if repair(bin_data.codes):
+                    self._write_bin_unlocked(bin_data)
 
     def export_json(self) -> str:
         from models import utc_now

@@ -1,0 +1,24 @@
+configuration:
+  interface:
+    name: Rozhraní
+    fields:
+      language:
+        name: Jazyk
+        description: >-
+          Jazyk aplikace. „Auto“ se řídí jazykem Home Assistantu a poté jazykem
+          prohlížeče. Každý jazyk je uveden svým vlastním názvem. Jazyk zvolený přímo v
+          aplikaci se pamatuje pro každý prohlížeč zvlášť a má přednost před tímto
+          nastavením.
+      theme:
+        name: Motiv
+        description: >-
+          Barevný motiv: „Light“ (světlý) nebo „Dark“ (tmavý). „Auto“ se řídí nastavením
+          světlého/tmavého režimu v Home Assistantu.
+  backup:
+    name: Zálohování
+    fields:
+      keep_count:
+        name: Počet uchovávaných záloh
+        description: >-
+          Kolik záložních kopií s časovým razítkem se uchovává v konfigurační složce
+          doplňku (dostupné přes SAMBA). Starší kopie se automaticky mažou.

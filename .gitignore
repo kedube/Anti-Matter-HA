@@ -6,3 +6,6 @@ Thumbs.db
 *.tmp
 anti_matter.json
 backups/
+node_modules/
+.venv/
+.pytest_cache/

@@ -180,8 +180,14 @@ def parse_qr_payload(payload: str) -> ParsedSetupPayload:
     raw = payload.strip()
     if not raw.upper().startswith("MT:"):
         raise ValueError("Not an MT: payload")
-    encoded = raw[3:]
-    decoded = _base38_decode(encoded)[::-1]
+    # "MT:<p1>*<p2>..." bundles several devices; parse the first. Bytes past the
+    # fixed 11-byte (88-bit) base payload are optional TLV data (serial number etc.),
+    # so only the base bytes are bit-reversed and read.
+    encoded = raw[3:].split("*", 1)[0]
+    data = _base38_decode(encoded)
+    if len(data) < 11:
+        raise ValueError("MT: payload too short")
+    decoded = data[:11][::-1]
     fields = _read_fields(decoded, _QR_SPEC)
     disc = fields["discriminator"]
     flow_val = fields["flow"]
@@ -328,9 +334,14 @@ def normalize_scanned_or_entered(
 
     manual_raw = generate_manual_code(parsed)
     manual_display = format_manual_display(manual_raw)
-    try:
-        qr_out = generate_qr_payload(parsed)
-    except ValueError:
-        qr_out = qr_in if qr_in.upper().startswith("MT:") else ""
+    if parsed.has_full_qr_fields and qr_in.upper().startswith("MT:"):
+        # Keep the scanned string verbatim: regenerating it would drop TLV data and
+        # any extra "*" device payloads, producing a QR that no longer matches the label.
+        qr_out = "MT:" + qr_in[3:]
+    else:
+        try:
+            qr_out = generate_qr_payload(parsed)
+        except ValueError:
+            qr_out = qr_in if qr_in.upper().startswith("MT:") else ""
 
     return {"manual_code": manual_display, "qr_payload": qr_out}

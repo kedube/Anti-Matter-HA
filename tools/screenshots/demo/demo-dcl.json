@@ -1,0 +1,64 @@
+{
+  "_comment": "Recorded Matter DCL answers (public CSA registry) that the capture mock serves, so screenshots never call the network.",
+  "vendors": {
+    "4476": {
+      "vendor_id": 4476,
+      "name": "IKEA of Sweden",
+      "landing_page": "https://www.ikea.com/"
+    },
+    "4447": {
+      "vendor_id": 4447,
+      "name": "Aqara",
+      "landing_page": "https://www.aqara.com/"
+    },
+    "4874": {
+      "vendor_id": 4874,
+      "name": "Eve",
+      "landing_page": "https://www.evehome.com"
+    }
+  },
+  "models": {
+    "4476/36880": {
+      "vendor_id": 4476,
+      "product_id": 36880,
+      "name": "VARMBLIXT table/wall lamp",
+      "product_page": null,
+      "support_page": null
+    },
+    "4476/36864": {
+      "vendor_id": 4476,
+      "product_id": 36864,
+      "name": "KAJPLATS E27 WS globe 470lm",
+      "product_page": null,
+      "support_page": null
+    },
+    "4447/8195": {
+      "vendor_id": 4447,
+      "product_id": 8195,
+      "name": "Aqara Motion and Light Sensor P2",
+      "product_page": "https://www.aqara.com/en/products.html",
+      "support_page": "https://www.aqara.com/en/products.html"
+    },
+    "4874/80": {
+      "vendor_id": 4874,
+      "product_id": 80,
+      "name": "Eve Energy",
+      "product_page": null,
+      "support_page": null
+    },
+    "4874/77": {
+      "vendor_id": 4874,
+      "product_id": 77,
+      "name": "Eve Door & Window",
+      "product_page": null,
+      "support_page": null
+    },
+    "4874/89": {
+      "vendor_id": 4874,
+      "product_id": 89,
+      "name": "Eve Motion",
+      "product_page": null,
+      "support_page": null
+    }
+  }
+}

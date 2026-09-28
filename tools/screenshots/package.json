@@ -1,0 +1,14 @@
+{
+  "name": "anti-matter-screenshots",
+  "private": true,
+  "version": "3.0.0",
+  "description": "Reproducible README / wiki screenshots, scan-demo.gif and brand images for the Anti-Matter add-on (fake demo data only).",
+  "type": "module",
+  "scripts": {
+    "capture": "node capture.mjs",
+    "fixtures": "python3 make_fixtures.py .work/fixtures"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}

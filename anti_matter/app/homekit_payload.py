@@ -89,7 +89,7 @@ def compose_setup_uri(
     payload = ((payload << 4) | (reserved & 0xF)) & 0xFFFFFFFF
     payload = ((payload << 8) | (category_id & 0xFF)) & 0xFFFFFFFF
     payload = ((payload << 4) | (flag & 0xF)) & 0xFFFFFFFF
-    payload = (int(payload) << 27) | (int(password) & 0x7FFFFFFF)
+    payload = (int(payload) << 27) | (int(password) & 0x7FFFFFF)
     base36 = to_base36_upper(int(payload), 9)
     sid = normalize_setup_id(setup_id)
     return f"X-HM://{base36}{sid}"
@@ -112,7 +112,9 @@ def decode_payload_from_base36(base36: str) -> dict[str, int]:
         n = int(base36, 36)
     except ValueError:
         return {}
-    password = n & 0x7FFFFFFF
+    # Setup code is the low 27 bits; bits 27-30 are the flags (a 31-bit mask
+    # leaked the flag bits into the pairing code for any non-zero flag).
+    password = n & 0x7FFFFFF
     rest = n >> 27
     flag = rest & 0xF
     rest >>= 4
@@ -150,9 +152,30 @@ def decode_pairing_from_uri(uri: str) -> str:
         n = int(parsed["base36"], 36)
     except ValueError:
         return ""
-    password = n & 0x7FFFFFFF
+    password = n & 0x7FFFFFF
     digits = str(password)
     return digits.zfill(8) if len(digits) <= 8 else ""
+
+
+def repair_legacy_pairing(manual_code: str, qr_payload: str) -> str | None:
+    """Corrected pairing digits for a code saved by the pre-3.0 31-bit-mask decoder.
+
+    Before 3.0 the pairing code was decoded with a 31-bit mask, so for any setup URI
+    with non-zero flag bits the stored 8 digits were wrong. Only a value that exactly
+    matches that old derivation is replaced, so hand-typed codes are never touched.
+    """
+    parsed = parse_setup_uri(qr_payload or "")
+    if not parsed:
+        return None
+    try:
+        n = int(parsed["base36"], 36)
+    except ValueError:
+        return None
+    legacy = str(n & 0x7FFFFFFF).zfill(8)[-8:]
+    correct = str(n & 0x7FFFFFF).zfill(8)
+    if legacy != correct and pairing_digits(manual_code) == legacy:
+        return correct
+    return None
 
 
 def decode_fields_from_uri(uri: str) -> dict[str, str | int]:

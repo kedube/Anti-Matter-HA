@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en" data-theme="dark"><head><meta charset="utf-8"><title>hero</title>
+<link rel="stylesheet" href="common.css"><script src="common.js"></script></head>
+<body><script>
+  // 1280 x 720: desktop vault (dark | light tear) + a phone at scan lock-on, over the void backdrop.
+  const v = el("div", { class: "void" });
+  v.append(orbits(1280, 720, 560, 380, 1.25));
+  const win = el("div", { class: "window", style: { left: "52px", top: "46px", width: "992px", height: "620px" } }, tear(DATA.dark, DATA.light, { t1: 64, t2: 40 }));
+  document.body.append(v, win, phone(DATA.phone, { width: 268, tone: "black", x: 968, y: 96, rotate: 0, z: 3 }));
+  ready();
+</script></body></html>

@@ -1,0 +1,237 @@
+/* =====================================================================
+   Anti-Matter design tokens  ·  "Particle" system (Lab = light, Void = dark)
+   ---------------------------------------------------------------------
+   One source of truth. Components never contain per-theme rules: every
+   light/dark difference lives in this file.
+
+   Theme resolution (see js/theme-boot.js, inlined in <head>):
+     ?theme= → stored override (Auto|Light|Dark) → add-on option → HA frame
+     → prefers-color-scheme.  The boot script ALWAYS writes
+     <html data-theme="light|dark"> before first paint and re-writes it when
+     the OS / HA theme changes, so the dark palette is authored once below.
+   The @media block at the end is only a pre-boot / no-JS safety net for
+   the page background and text (no flash); it is not a second palette.
+   ===================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* ---------- Surfaces (Lab) ---------- */
+  --bg:            #F3F2FA;   /* page */
+  --bg-veil:       rgba(243, 242, 250, .86); /* sticky bars over the page (solid fallback = --bg) */
+  --surface:       #FFFFFF;   /* sheets, menus, popovers, dialogs */
+  --surface-2:     #F8F7FD;   /* raised rows, hover */
+  --surface-3:     #EFEDF8;   /* pressed, segmented track, table header */
+  --card:          #FFFFFF;   /* code cards */
+  --sunk:          #F1EFF9;   /* inputs, code readouts */
+  --scrim:         rgba(22, 20, 46, .42);
+  --scroll-shadow: rgba(22, 20, 46, .22); /* edge shadow of sticky table columns */
+  --line:          #E3E0F0;   /* hairlines */
+  --line-2:        #CFCAE6;   /* control borders */
+  --line-strong:   #8C85B8;   /* checkbox / switch outlines (3:1 on surface) */
+
+  /* ---------- Text (all ≥ 4.5:1 on --surface, --card, --sunk, --surface-3) ---------- */
+  --text:          #16142E;
+  --text-2:        #46426B;
+  --text-3:        #5C5883;
+  --text-on-dark:  #FFFFFF;
+
+  /* ---------- Brand ---------- */
+  --accent:        #5B3CEF;   /* text / links / active icons  (6.3:1 on white) */
+  --accent-fill:   #5B3CEF;   /* primary button fill (white text 6.3:1) */
+  --accent-fill-hover: #4B2EDA;
+  --accent-soft:   #EDE9FF;   /* selected rows, active chips */
+  --accent-line:   #BDB0FF;
+  --on-accent:     #FFFFFF;
+  --grad-hero:     linear-gradient(135deg, #5B3CEF 0%, #6E36EA 55%, #8231D6 100%);
+  --grad-hero-hover: linear-gradient(135deg, #4F31E3 0%, #642FE0 55%, #772ACB 100%);
+  --positron:      #0A7C90;   /* counter-particle cyan: lock-on, focus */
+  --focus:         #0A7C90;   /* focus ring (≥3:1 on every surface) */
+  --keycap-edge:   rgba(18, 8, 70, .30);
+
+  /* ---------- Status ---------- */
+  --ok:            #087A4D;   --ok-soft:     #E2F5EC;   --ok-line:     #9FD9BE;
+  --warn:          #8A5300;   --warn-soft:   #FFF2D9;   --warn-line:   #F0C77A;
+  --danger:        #C4253D;   --danger-soft: #FDE8EC;   --danger-line: #F2A7B4;
+  --danger-fill:   #C8283F;   /* white text 5.4:1 */
+  --info:          #2B63D9;   --info-soft:   #E7EEFD;
+
+  /* ---------- Orbital art (graphics only, never text) ---------- */
+  --orb-1:         #7C5CFF;
+  --orb-2:         #1FB8D6;
+  --orb-3:         #E0509A;
+  --orb-line:      rgba(91, 60, 239, .20);
+  --dust:          rgba(60, 40, 160, .10);
+  --aurora-1:      rgba(124, 92, 255, .10);
+  --aurora-2:      rgba(31, 184, 214, .08);
+
+  /* ---------- Protocol identity: --p text-safe, --pv vivid (graphics), --pg glow ---------- */
+  --p-matter:  #06717F;  --pv-matter:  #14B4C6;  --pg-matter:  rgba(20, 180, 198, .18);
+  --p-homekit: #935900;  --pv-homekit: #F0A417;  --pg-homekit: rgba(240, 164, 23, .18);
+  --p-zwave:   #2B5FD0;  --pv-zwave:   #3D7BF5;  --pg-zwave:   rgba(61, 123, 245, .18);
+  --p-zigbee:  #B8246A;  --pv-zigbee:  #EC4899;  --pg-zigbee:  rgba(236, 72, 153, .16);
+  --p-tuya:    #AD3F0B;  --pv-tuya:    #F97316;  --pg-tuya:    rgba(249, 115, 22, .16);
+  --p-other:   #56607C;  --pv-other:   #8C95B2;  --pg-other:   rgba(140, 149, 178, .16);
+
+  /* ---------- Printed-label & QR colours: NEVER themed ---------- */
+  --qr-fg:         #000000;
+  --qr-bg:         #FFFFFF;
+  --label-paper:   #FFFFFF;
+  --label-ink:     #0B0B10;
+  --label-ink-2:   #4A4A55;   /* 8.9:1 on white */
+  --label-ring:    rgba(22, 20, 46, .10); /* 1px edge of the white tile */
+  --tile-glow:     0px;       /* halo blur behind QR tiles & labels (Void only) */
+  --glow-y:        0px;       /* halo vertical offset (Void only) */
+
+  /* ---------- Typography ---------- */
+  --font-ui:   "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans",
+               "Noto Sans Hebrew", "Noto Sans Arabic", "Geeza Pro", Tahoma,
+               "PingFang SC", "Hiragino Sans", "Noto Sans CJK SC", "Microsoft YaHei", "Malgun Gothic", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --fs-micro:    .6875rem;  /* 11 */
+  --fs-caption:  .75rem;    /* 12 */
+  --fs-small:    .8125rem;  /* 13 */
+  --fs-body:     .875rem;   /* 14 */
+  --fs-body-lg:  .9375rem;  /* 15 */
+  --fs-title-3:  1rem;      /* 16 */
+  --fs-title-2:  1.1875rem; /* 19 */
+  --fs-title-1:  1.5rem;    /* 24 */
+  --fs-display-2: 2rem;     /* 32 */
+  --fs-display-1: 2.75rem;  /* 44 */
+
+  --fw-thin: 250; --fw-light: 350; --fw-regular: 500; --fw-medium: 600; --fw-semibold: 700; --fw-bold: 800;
+  --lh-tight: 1.2; --lh-snug: 1.35; --lh-body: 1.5;
+  --tracking-overline: .08em;
+
+  /* ---------- Space (4px grid) ---------- */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px; --s-5: 20px;
+  --s-6: 24px; --s-7: 28px; --s-8: 32px; --s-10: 40px; --s-12: 48px; --s-14: 56px;
+
+  /* ---------- Radii ---------- */
+  --r-xs: 6px;    /* kbd, micro tags */
+  --r-sm: 8px;    /* small buttons, checkboxes */
+  --r-md: 12px;   /* buttons, inputs, menu items */
+  --r-lg: 16px;   /* readouts, tiles, popovers */
+  --r-xl: 20px;   /* cards, insight strip */
+  --r-2xl: 28px;  /* sheets & dialogs */
+  --r-pill: 999px;
+  --r-qr: 12px;   /* white QR tile */
+  --r-label: 18px;/* printable label */
+
+  /* ---------- Elevation ---------- */
+  --sh-1: 0 1px 2px rgba(22, 20, 46, .06), 0 2px 8px -2px rgba(22, 20, 46, .06);
+  --sh-2: 0 2px 4px rgba(22, 20, 46, .06), 0 10px 28px -8px rgba(40, 30, 110, .16);
+  --sh-3: 0 4px 10px rgba(22, 20, 46, .08), 0 24px 60px -12px rgba(40, 30, 110, .26);
+  --sh-hero: 0 8px 22px -8px rgba(91, 60, 239, .60);
+  --sh-tile: 0 0 0 1px var(--label-ring), 0 1px 2px rgba(22, 20, 46, .08), 0 6px 18px -8px rgba(22, 20, 46, .16);
+
+  /* ---------- Motion ---------- */
+  --dur-1: 120ms; --dur-2: 200ms; --dur-3: 320ms; --dur-4: 480ms;
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --ease-in-out: cubic-bezier(.6, 0, .3, 1);
+  --ease-spring: cubic-bezier(.34, 1.4, .5, 1);
+
+  /* ---------- Layout ---------- */
+  --appbar-h: 64px;
+  --sidebar-w: 264px;
+  --gutter: 28px;
+  --dock-h: 68px;
+  --content-max: 2400px;  /* main column cap; beyond it the column centres in the free space */
+  --card-min: 360px;
+  --tile-w: 148px;        /* card QR tile width at 100% grid zoom */
+  --zoom: 1;              /* grid zoom factor (.5 – 1.5), set on .grid */
+  /* HA ingress: env(safe-area-inset-*) is 0 inside the iframe; ha-bridge.js writes --ha-safe-* from
+     home-assistant/subscribe-properties → safeAreaInsets. */
+  --safe-top:    var(--ha-safe-top, env(safe-area-inset-top, 0px));
+  --safe-bottom: var(--ha-safe-bottom, env(safe-area-inset-bottom, 0px));
+  --safe-start:  var(--ha-safe-start, 0px);
+  --safe-end:    var(--ha-safe-end, 0px);
+
+  /* ---------- Layers ---------- */
+  --z-sticky: 20; --z-appbar: 30; --z-dock: 40; --z-selbar: 45; --z-popover: 60;
+  --z-sheet: 70; --z-scanner: 80; --z-dialog: 85; --z-toast: 90; --z-tooltip: 95;
+}
+
+/* ============================ Void (dark) ============================ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg:            #080719;
+  --bg-veil:       rgba(8, 7, 25, .84);
+  --surface:       #15133A;
+  --surface-2:     #1B1845;
+  --surface-3:     #232052;
+  --card:          #121032;
+  --sunk:          #0B0A24;
+  --scrim:         rgba(3, 2, 12, .66);
+  --scroll-shadow: rgba(0, 0, 0, .75);
+  --line:          #29265A;
+  --line-2:        #3A366E;
+  --line-strong:   #6A64A8;
+
+  --text:          #F1F0FF;
+  --text-2:        #BDB9E4;
+  --text-3:        #9E9ACB;
+
+  --accent:        #B0A2FF;
+  --accent-fill:   #6246F5;   /* white text 5.6:1 */
+  --accent-fill-hover: #6F55FF;
+  --accent-soft:   #241D5E;
+  --accent-line:   #5A48C8;
+  --grad-hero:     linear-gradient(135deg, #5F43F5 0%, #6E36EA 55%, #8231D6 100%);
+  --grad-hero-hover: linear-gradient(135deg, #6A4FFF 0%, #7A42F5 55%, #8E3DE2 100%);
+  --positron:      #5DE6F5;
+  --focus:         #5DE6F5;
+  --keycap-edge:   rgba(0, 0, 0, .45);
+
+  --ok:            #45E0A0;   --ok-soft:     #0F2E2A;   --ok-line:     #1F6B53;
+  --warn:          #FFC86B;   --warn-soft:   #33260E;   --warn-line:   #7A5A1E;
+  --danger:        #FF8497;   --danger-soft: #3A1426;   --danger-line: #7C2A40;
+  --danger-fill:   #CF2F4A;
+  --info:          #7FA9FF;   --info-soft:   #16224A;
+
+  --orb-1:         #8F78FF;
+  --orb-2:         #3EE0F0;
+  --orb-3:         #FF6FB5;
+  --orb-line:      rgba(160, 145, 255, .26);
+  --dust:          rgba(200, 190, 255, .20);
+  --aurora-1:      rgba(110, 70, 255, .22);
+  --aurora-2:      rgba(40, 200, 230, .10);
+
+  --p-matter:  #45DDEB;  --pv-matter:  #2FD3E3;  --pg-matter:  rgba(47, 211, 227, .30);
+  --p-homekit: #FFC95E;  --pv-homekit: #FFB938;  --pg-homekit: rgba(255, 185, 56, .28);
+  --p-zwave:   #80AEFF;  --pv-zwave:   #5A8FFF;  --pg-zwave:   rgba(90, 143, 255, .30);
+  --p-zigbee:  #FF7DBC;  --pv-zigbee:  #FF5CA8;  --pg-zigbee:  rgba(255, 92, 168, .26);
+  --p-tuya:    #FFA066;  --pv-tuya:    #FF8A3D;  --pg-tuya:    rgba(255, 138, 61, .26);
+  --p-other:   #B4BBD4;  --pv-other:   #9AA2C0;  --pg-other:   rgba(154, 162, 192, .22);
+
+  --label-ring:    rgba(255, 255, 255, .9);
+  --tile-glow:     26px;
+  --glow-y:        8px;
+
+  --sh-1: 0 1px 0 rgba(255, 255, 255, .03) inset, 0 2px 10px -2px rgba(0, 0, 0, .5);
+  --sh-2: 0 1px 0 rgba(255, 255, 255, .04) inset, 0 14px 34px -10px rgba(0, 0, 0, .7);
+  --sh-3: 0 1px 0 rgba(255, 255, 255, .05) inset, 0 28px 70px -14px rgba(0, 0, 0, .8);
+  --sh-hero: 0 10px 26px -8px rgba(110, 80, 255, .75);
+  --sh-tile: 0 0 0 1px var(--label-ring), 0 10px 30px -10px rgba(0, 0, 0, .7);
+}
+
+/* Explicit Invert option (dark screens): swaps QR fills only — never a CSS filter. */
+:root[data-qr-invert="true"] {
+  --qr-fg: #FFFFFF; --qr-bg: #000000;
+  --label-paper: #000000; --label-ink: #FFFFFF; --label-ink-2: #B9B9C6; --label-ring: rgba(255, 255, 255, .22);
+}
+
+/* Pre-boot / no-JS safety net only (no flash before theme-boot.js runs). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) { color-scheme: dark; --bg: #080719; --text: #F1F0FF; }
+}
+
+/* Protocol scoping: any element with .p-<protocol> exposes --p / --pv / --pg */
+.p-matter  { --p: var(--p-matter);  --pv: var(--pv-matter);  --pg: var(--pg-matter); }
+.p-homekit { --p: var(--p-homekit); --pv: var(--pv-homekit); --pg: var(--pg-homekit); }
+.p-zwave   { --p: var(--p-zwave);   --pv: var(--pv-zwave);   --pg: var(--pg-zwave); }
+.p-zigbee  { --p: var(--p-zigbee);  --pv: var(--pv-zigbee);  --pg: var(--pg-zigbee); }
+.p-tuya    { --p: var(--p-tuya);    --pv: var(--pv-tuya);    --pg: var(--pg-tuya); }
+.p-other   { --p: var(--p-other);   --pv: var(--pv-other);   --pg: var(--pg-other); }

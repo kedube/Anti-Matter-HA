@@ -1,0 +1,105 @@
+{
+  "devices": [
+    {
+      "id": "1607368b5d5b019df6b0dd087711ee42",
+      "name": "Bedroom ceiling light",
+      "area": "Bedroom"
+    },
+    {
+      "id": "d3e2fb619e0ea70cf6ffa142efec5ced",
+      "name": "Bedroom thermostat",
+      "area": "Bedroom"
+    },
+    {
+      "id": "8bfdb0b91a7588bdabc0002ebd9a4270",
+      "name": "Front door lock",
+      "area": "Entrance"
+    },
+    {
+      "id": "42138aa5a9074e93e8fa523e5c829ebb",
+      "name": "Garage door opener",
+      "area": "Garage"
+    },
+    {
+      "id": "b4a9198910900f4433e344d1900b431a",
+      "name": "Hallway motion sensor",
+      "area": "Hallway"
+    },
+    {
+      "id": "4595196b86efcc0294b5f605c63c503c",
+      "name": "Hallway smoke alarm",
+      "area": "Hallway"
+    },
+    {
+      "id": "b242891ffbd1ce1b607db2367e24c425",
+      "name": "Kitchen ceiling light",
+      "area": "Kitchen"
+    },
+    {
+      "id": "a6a7e24e36ee65e55bfa0690b522a39d",
+      "name": "Kitchen smart plug",
+      "area": "Kitchen"
+    },
+    {
+      "id": "84701131c16982cfeca037a07dc10344",
+      "name": "Kitchen wall switch",
+      "area": "Kitchen"
+    },
+    {
+      "id": "bed6a9e9d5b514c82fdf327fbc57867e",
+      "name": "Living room floor lamp",
+      "area": "Living Room"
+    },
+    {
+      "id": "3c25c7c6b139df1149e5406ff2499da3",
+      "name": "Living room speaker",
+      "area": "Living Room"
+    },
+    {
+      "id": "8268000cd121e86bb69ec77fd8a5a954",
+      "name": "Living room TV",
+      "area": "Living Room"
+    },
+    {
+      "id": "3fef06fd6e5291cdd279fcb2f194a14d",
+      "name": "Nursery night light",
+      "area": "Nursery"
+    },
+    {
+      "id": "9c788937012c9f51317120d59973ea2b",
+      "name": "Office air purifier",
+      "area": "Office"
+    },
+    {
+      "id": "f4952e4dae4494cc19bd5affae288776",
+      "name": "Office desk lamp",
+      "area": "Office"
+    },
+    {
+      "id": "95e982082a467574884674b931d191d5",
+      "name": "Office smart plug",
+      "area": "Office"
+    },
+    {
+      "id": "23622082a63b1dc5b568689b3198362c",
+      "name": "Office speaker",
+      "area": "Office"
+    },
+    {
+      "id": "6d7bb69a9dc9692273e67a2914cbfe1c",
+      "name": "Patio string lights",
+      "area": "Garden"
+    }
+  ],
+  "areas": [
+    "Bedroom",
+    "Entrance",
+    "Garage",
+    "Garden",
+    "Hallway",
+    "Kitchen",
+    "Living Room",
+    "Nursery",
+    "Office"
+  ]
+}
