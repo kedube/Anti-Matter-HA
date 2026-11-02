@@ -14,7 +14,7 @@
  *       transferred. An ImageBitmap/Blob needs OffscreenCanvas here (see "ready").
  *   {id, type:"scanImage", imageData | bitmap | blob, scale?, options}
  *       Multi-pass still-image decode (original, greycast, inverted, 2x upscale,
- *       2x2 tiles); stops at the first pass that finds something unless
+ *       2x2 tiles, white margin at 0.5x/0.35x); stops at the first pass that finds something unless
  *       options.exhaustive. `scale` maps the pixels sent to original-image pixels.
  *   {id, type:"ping"}
  * Worker -> main:
@@ -328,6 +328,14 @@ function crop(src, sw, x, y, w, h) {
   return out;
 }
 
+/** Copy a plane onto a white canvas with an m px border on every side. */
+function pad(src, w, h, m) {
+  var pw = w + 2 * m;
+  var out = new Uint8ClampedArray(pw * (h + 2 * m)).fill(255);
+  for (var r = 0; r < h; r++) out.set(src.subarray(r * w, r * w + w), (r + m) * pw + m);
+  return out;
+}
+
 function fit(w, h, maxDim) {
   var s = Math.min(1, maxDim / Math.max(w, h));
   return { w: Math.max(1, Math.round(w * s)), h: Math.max(1, Math.round(h * s)) };
@@ -360,6 +368,11 @@ var PASS1_MAX = 2048;
 var GREYCAST_MAX = 1800; // the v2.0.5 value
 var UPSCALE_BELOW = 1000;
 var TILES_FROM = 1400;
+// Tightly cropped labels lose the white quiet zone the finder needs (issue #6): one
+// failing 1211x1090 photo decoded only once padded with white AND scaled to 0.5x/0.35x.
+var MARGIN_SCALES = [0.5, 0.35];
+var MARGIN_FRAC = 0.15; // border per side, as a fraction of the longer side
+var MARGIN_MIN_DIM = 160; // skip scales that would leave too few pixels per module
 
 function scanImage(msg) {
   var t0 = now();
@@ -458,6 +471,20 @@ function scanImage(msg) {
           return chain;
         });
       }
+      // 6. white margin + downscale (full size too for small images) for tight crops
+      var marginScales = (Math.max(W, H) < UPSCALE_BELOW ? [1] : []).concat(MARGIN_SCALES);
+      marginScales.forEach(function (s) {
+        if (Math.max(W, H) * s < MARGIN_MIN_DIM) return;
+        passes.push(function () {
+          var lw = Math.max(1, Math.round(W * s));
+          var lh = Math.max(1, Math.round(H * s));
+          var plane = stretch(lw === W && lh === H ? getLuma() : resize(getLuma(), W, H, lw, lh));
+          var m = Math.max(16, Math.round(Math.max(lw, lh) * MARGIN_FRAC));
+          var sx = (W / lw) * toOrig;
+          var sy = (H / lh) * toOrig;
+          return run("margin", lumaToImageData(pad(plane, lw, lh, m), lw + 2 * m, lh + 2 * m), base, sx, sy, -m * sx, -m * sy);
+        });
+      });
 
       var i = 0;
       function next() {

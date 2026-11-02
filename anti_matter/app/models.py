@@ -54,6 +54,8 @@ class MatterCode(BaseModel):
     notes: str = ""
     in_use: bool = False  # device is currently deployed (vs. spare/stock)
     conn_wifi: bool = False
+    # The *Thread* connectivity tick (name kept from 1.x/2.x); the protocol is code_type.
+    # Never derive it from code_type: a Wi-Fi Matter device is matter + conn_matter=False.
     conn_matter: bool = False
     conn_zigbee: bool = False
     conn_bluetooth: bool = False

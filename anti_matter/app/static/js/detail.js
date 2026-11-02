@@ -559,10 +559,12 @@
       var dev = AM.ha.device(linkedId);
       var more = h("button", { type: "button", class: "icon-btn icon-btn--sm", tip: t("detail.ha_more"), "aria-haspopup": "menu" }, icon("ellipsis"));
       more.addEventListener("click", function () {
+        var canFill = Object.keys(AM.ha.fillPatch(dev, code)).length > 0;
         AM.menu.show(more, [
           { icon: "external-link", label: t("action.open_in_ha"), run: function () { AM.ha.openDevice(linkedId); } },
+          canFill ? { icon: "wand-sparkles", label: t("ha.fill_empty"), run: function () { fillFromHa(code, dev); } } : null,
           { icon: "unlink", label: t("detail.unlink"), danger: true, run: function () { setLink(code, null); } },
-        ], { label: t("detail.ha_more") });
+        ].filter(Boolean), { label: t("detail.ha_more") });
       });
       return h("div", { class: "ha-row ha-row--linked" },
         h("span", { class: "ha-row__icon" }, icon("house-plug")),
@@ -582,10 +584,25 @@
 
   async function setLink(code, deviceId) {
     try {
-      await AM.api("/codes/" + encodeURIComponent(code.id), { method: "PUT", body: { ha_link: { device_id: deviceId || null } } });
-      AM.haptic("success");
       var dev = deviceId ? AM.ha.device(deviceId) : null;
+      // Linking also fills the code's empty vendor / product / area from the device (issue #7).
+      var body = Object.assign({ ha_link: { device_id: deviceId || null } }, AM.ha.fillPatch(dev, code));
+      await AM.api("/codes/" + encodeURIComponent(code.id), { method: "PUT", body: body });
+      AM.haptic("success");
       AM.toast({ message: deviceId ? t("toast.linked", { name: dev ? dev.name : "" }) : t("toast.unlinked"), icon: deviceId ? "link-2" : "unlink" });
+      await AM.refresh({ force: true });
+    } catch (e) {
+      AM.reportError(e);
+    }
+  }
+
+  async function fillFromHa(code, dev) {
+    var patch = AM.ha.fillPatch(dev, code);
+    if (!Object.keys(patch).length) return;
+    try {
+      await AM.api("/codes/" + encodeURIComponent(code.id), { method: "PUT", body: patch });
+      AM.haptic("success");
+      AM.toast({ message: t("ha.filled"), icon: "wand-sparkles" });
       await AM.refresh({ force: true });
     } catch (e) {
       AM.reportError(e);

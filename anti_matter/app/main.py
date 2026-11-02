@@ -22,6 +22,9 @@ text>, ...extra}}``. ``error`` is a stable machine-readable code the UI localize
     invalid_code                 400     label/card renderer rejected the stored code
     nothing_to_render            404     label.png / save-to-media: no manual code and no QR
     invalid_import               400     POST /api/import: not a valid vault export
+    vault_write_failed           500     POST /api/import: valid file, but the vault could not be
+                                         written (disk full, read-only); the old vault is kept
+    backup_failed                500     POST /api/backup: the backup copy could not be written
     invalid_upload               400     save-to-media: bad PNG/SVG, or unsafe SVG content
     unsupported_media_type       415     save-to-media: image body that is not PNG or SVG
     too_large                    413     save-to-media: upload over 8 MB
@@ -627,6 +630,10 @@ async def import_vault(body: ImportBody):
     try:
         _check_import_shape(body.data)
         vault = storage.import_json(body.data, merge=body.merge)
+    except OSError as exc:
+        # The file was fine; writing it was not. The write is atomic, so the old vault stays.
+        _LOGGER.error("Vault import could not be written (merge=%s): %s", body.merge, exc)
+        raise _api_error(500, "vault_write_failed", f"Could not write the vault: {exc}") from exc
     except Exception as exc:
         # Validation errors quote the offending input (possibly a code): redact for the log.
         _LOGGER.warning("Vault import failed (merge=%s): %s", body.merge, _redact(exc))
@@ -640,7 +647,12 @@ async def import_vault(body: ImportBody):
 
 @app.post("/api/backup")
 async def trigger_backup():
-    result = run_backup()
+    try:
+        result = run_backup()
+    except OSError as exc:
+        # Replace-import relies on this copy, so a failure must reach the UI as such.
+        _LOGGER.error("Manual backup failed: %s", exc)
+        raise _api_error(500, "backup_failed", f"Could not write the backup: {exc}") from exc
     _LOGGER.info("Manual backup triggered: %s", result)
     return result
 
@@ -1285,9 +1297,9 @@ async def zwave_device_info(manufacturer_id: int, product_type: int, product_id:
 
 @app.get("/api/ha/devices")
 async def ha_devices():
-    """[{id, name}] for every HA device — populates the device-picker in the code
-    dialog so ha_link stores a device_id directly (linking to its own HA page),
-    with no entity_id involved."""
+    """[{id, name, area, manufacturer, model, entities}] for every HA device — populates
+    the device picker in the code dialog. ha_link stores only the device_id (linking to
+    its own HA page); the entity ids are shown and searched to tell look-alikes apart."""
     return await ha.list_devices()
 
 

@@ -94,6 +94,7 @@
       cats: code ? AM.cat.idsOf(code) : [],
       haId: (c.ha_link && c.ha_link.device_id) || "",
       haText: "",
+      haFilled: false,
       inUse: !!c.in_use,
       vendor: c.device_vendor || "",
       product: c.device_product || "",
@@ -674,9 +675,12 @@
     if (sug && !str(q)) haItems = [sug].concat(haItems.filter(function (d) { return d.id !== sug.id; })).slice(0, 25);
     haActive = -1;
     var lis = haItems.map(function (d, i) {
+      var meta = [d.area, [d.manufacturer, d.model].filter(Boolean).join(" ")].filter(Boolean).join(" · ");
+      var ents = AM.ha.entities(d, q);
       return h("li", { class: "menu__item combobox__opt", role: "option", id: "ed-ha-opt-" + i, "aria-selected": "false", "data-i": String(i) },
         icon(d.id === m.haId ? "check" : "house"),
-        h("span", { class: "combobox__txt" }, h("b", { dir: "auto" }, d.name), d.area ? h("small", { dir: "auto" }, d.area) : null),
+        h("span", { class: "combobox__txt" }, h("b", { dir: "auto" }, d.name), meta ? h("small", { dir: "auto" }, meta) : null,
+          ents.length ? h("small", { class: "mono", dir: "ltr" }, ents[0] + (ents.length > 1 ? " +" + (ents.length - 1) : "")) : null),
         sug && d.id === sug.id ? h("span", { class: "tag tag--accent" }, t("scan.suggested")) : h("span"));
     });
     if (!lis.length) lis.push(h("li", { class: "combobox__empty", role: "presentation" }, t("editor.ha_none")));
@@ -707,15 +711,28 @@
     R.haInput.value = m.haText;
     haHide();
     markDirty();
+    m.haFilled = fillFromHa(dev);
     refreshHaStatus();
     refreshSuggest();
+  }
+  /** Copy the device's manufacturer / model / area into empty fields only (issue #7). */
+  function fillFromHa(dev) {
+    var patch = AM.ha.fillPatch(dev, { device_vendor: m.vendor, device_product: m.product, area: m.area });
+    if (!Object.keys(patch).length) return false;
+    // Counted as chosen by the user, so a later DCL name lookup does not replace them.
+    if (patch.device_vendor) { m.vendor = patch.device_vendor; m.touched.vendor = true; m.autofilled.vendor = false; if (R.vendor) R.vendor.value = m.vendor; }
+    if (patch.device_product) { m.product = patch.device_product; m.touched.product = true; m.autofilled.product = false; if (R.product) R.product.value = m.product; }
+    if (patch.area) { m.area = patch.area; if (R.area) R.area.value = m.area; renderAreas(); }
+    if (R.vendorAside) R.vendorAside.hidden = !(m.autofilled.vendor || m.autofilled.product);
+    markDirty();
+    refreshCount();
+    return true;
   }
   function exactDevice(text) {
     var q = lc(text);
     if (!q) return null;
-    var list = AM.ha.devices();
-    for (var i = 0; i < list.length; i++) if (lc(AM.ha.label(list[i])) === q) return list[i];
-    return null;
+    var hits = AM.ha.devices().filter(function (d) { return lc(AM.ha.label(d)) === q; });
+    return hits.length === 1 ? hits[0] : null; // never guess between look-alikes (issue #9)
   }
   function wireCombobox() {
     var inp = R.haInput;
@@ -725,6 +742,7 @@
     inp.addEventListener("input", function () {
       m.haText = inp.value;
       var dev = exactDevice(inp.value);
+      if ((dev ? dev.id : "") !== m.haId) m.haFilled = false;
       m.haId = dev ? dev.id : ""; // an id is stored only on an exact match
       markDirty();
       haShow();
@@ -762,6 +780,7 @@
     R.haClear.addEventListener("click", function () {
       m.haId = "";
       m.haText = "";
+      m.haFilled = false;
       inp.value = "";
       markDirty();
       refreshHaStatus();
@@ -774,8 +793,13 @@
     if (R.haClear) R.haClear.hidden = !R.haInput.value;
     if (m.haId) {
       var id = m.haId;
+      var dev = AM.ha.device(id);
+      var canFill = !m.haFilled && Object.keys(AM.ha.fillPatch(dev, { device_vendor: m.vendor, device_product: m.product, area: m.area })).length > 0;
       AM.fill(R.haStatus, icon("circle-check"), h("span", null, t("editor.ha_linked")),
-        h("button", { type: "button", class: "link-btn", onclick: function () { AM.ha.openDevice(id); } }, h("span", null, t("action.open_in_ha")), icon("external-link")));
+        h("button", { type: "button", class: "link-btn", onclick: function () { AM.ha.openDevice(id); } }, h("span", null, t("action.open_in_ha")), icon("external-link")),
+        m.haFilled ? h("span", null, t("ha.filled")) : null,
+        canFill ? h("button", { type: "button", class: "link-btn", onclick: function () { m.haFilled = fillFromHa(dev); refreshHaStatus(); } },
+          icon("wand-sparkles"), h("span", null, t("ha.fill_empty"))) : null);
       R.haStatus.classList.add("field__hint--ok");
       R.haStatus.hidden = false;
     } else if (str(R.haInput.value)) {

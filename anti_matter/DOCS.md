@@ -174,7 +174,8 @@ Use `↑` `↓` (or `K` `J`) for the previous or next code, `D` to jump to the d
 Linking a code to a device lets you jump from the code to that device's page in Home Assistant.
 
 - In the details, an unlinked code may show **Suggested Home Assistant device** with **Link device**.
-- In the editor, search the **Home Assistant device** field by name or area. Devices with the same name show their area. A code is linked only when you pick a device from the list.
+- In the editor, search the **Home Assistant device** field by name, area, manufacturer, model or entity ID. Each device in the list shows its area, manufacturer and model, and its entity IDs. Devices with the same name show their area, or their first entity ID when the area is the same too. A code is linked only when you pick a device from the list, or type a name that matches exactly one device.
+- Linking fills the code's **empty** Vendor, Product and Area from the device's manufacturer, model and area. Anything you have typed is kept. For a code that is already linked, **Fill empty fields from Home Assistant** does the same, in the editor and in the **⋯** menu of the details.
 - Once linked, **Open in Home Assistant** opens the device page. Inside Home Assistant it opens in the main window; in a plain browser tab it opens in a new tab. **Unlink** is in the **⋯** menu next to it.
 
 If Home Assistant cannot be reached, the device list is empty and you can link later. Area suggestions come from
@@ -217,11 +218,16 @@ in `backups/anti_matter_YYYYMMDD_HHMMSS.json`, with the time in UTC.
 - **Export** downloads `anti-matter-export.json`, which holds every code and category.
 - **Import** reads a file and shows what is in it, for example "14 codes · 6 categories · 3 new, 11 already in your vault". It then offers:
   - **Merge**: add the codes and categories that are not in your vault yet, and keep everything you have. Entries that look like codes you already have are pointed out.
-  - **Replace**: replace the whole vault with the file. A backup of your current vault is made first.
-- Files that are not Anti-Matter exports are refused, and nothing changes.
+  - **Replace**: replace the whole vault with the file. A backup of your current vault is made first. If that backup fails, nothing is replaced. Closing the dialog while the backup runs cancels the replace.
+- Files that are not Anti-Matter exports are refused, and nothing changes. If the file is fine but the vault cannot be written (for example, the disk is full), you are told so, and your vault stays as it was.
 - To restore a backup, copy a file from `backups/` to your computer (over Samba), then import it with **Replace**.
 
 Backups and exports contain the vault only; the Trash is not included.
+
+In an exported file, `code_type` is the protocol (`matter`, `homekit`, `zwave` or `other`; Zigbee and Tuya are
+`other` with a `custom_standard`). The `conn_*` fields are the **Connectivity** ticks: `conn_wifi`, `conn_zigbee`,
+`conn_bluetooth`, `conn_zwave`, and `conn_matter`, which is the **Thread** tick (the name is kept from earlier
+versions). So a Wi-Fi Matter device has `"code_type": "matter"` and `"conn_matter": false`.
 
 ### Where your files are
 
@@ -319,7 +325,7 @@ Use a photo, or paste the code as text.
 **The code is not recognised, or nothing is found in a photo**
 
 - Fill the frame with the QR, avoid glare, and hold still for a moment. Try the torch or zoom.
-- For photos, crop closer or use a sharper picture. Screenshots work well. Some formats, such as HEIC on some browsers, cannot be read; use JPEG or PNG.
+- For photos, keep some white space around the QR. Cropping right up to its edge removes the margin the reader needs and makes it harder to read. A sharper picture helps. Screenshots work well. Some formats, such as HEIC on some browsers, cannot be read; use JPEG or PNG.
 - Type the printed code in the editor instead: the 11-digit Matter code, `XXX-XX-XXX` for HomeKit, or the Z-Wave DSK.
 - A code of an unknown format is saved as **Other**, exactly as scanned, so you never lose it.
 

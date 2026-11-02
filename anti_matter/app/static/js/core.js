@@ -1854,6 +1854,25 @@
   // Home Assistant (AM.ha)
   // =========================================================================
   var haProps = { narrow: false, header: null };
+  // How many devices share a name / a name + area, recounted when the device list is replaced.
+  var haDup = { list: null, name: null, nameArea: null };
+  function haDupCounts() {
+    var list = AM.store.haDevices;
+    if (haDup.list !== list) {
+      var byName = new Map(), byNameArea = new Map();
+      list.forEach(function (d) {
+        var na = d.name + "\u0000" + (d.area || "");
+        byName.set(d.name, (byName.get(d.name) || 0) + 1);
+        byNameArea.set(na, (byNameArea.get(na) || 0) + 1);
+      });
+      haDup = { list: list, name: byName, nameArea: byNameArea };
+    }
+    return haDup;
+  }
+  function haEntities(dev) { return Array.isArray(dev && dev.entities) ? dev.entities : []; }
+  function haHay(dev) {
+    return [dev.name, dev.area, dev.manufacturer, dev.model].concat(haEntities(dev)).join(" ").toLocaleLowerCase();
+  }
   AM.ha = {
     /** HA reachable and devices loaded (the add-on reports ha_available). */
     available: function () { return !!(AM.store.info && AM.store.info.ha_available) && AM.store.haDevices.length > 0; },
@@ -1865,18 +1884,28 @@
       for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
       return null;
     },
-    /** Display label: name, plus " — area" only when several devices share the name. */
+    /** Display label: name, plus " — area" when several devices share the name, or
+     *  " — first entity id" when they share the area too, so every label is unique. */
     label: function (dev) {
       if (!dev) return "";
-      var same = AM.store.haDevices.filter(function (d) { return d.name === dev.name; }).length;
-      return same > 1 && dev.area ? t("ha.device_in_area", { name: dev.name, area: dev.area }) : dev.name;
+      var c = haDupCounts();
+      if ((c.name.get(dev.name) || 0) < 2) return dev.name;
+      if (dev.area && (c.nameArea.get(dev.name + "\u0000" + dev.area) || 0) < 2) return t("ha.device_in_area", { name: dev.name, area: dev.area });
+      var tag = haEntities(dev)[0] || dev.id;
+      return t("ha.device_in_area", { name: dev.name, area: tag });
     },
-    /** Case-insensitive search over name + area, max `limit` (25). Empty query lists all (sorted). */
+    /** Entity ids of a device, the ones matching `query` first. */
+    entities: function (dev, query) {
+      var list = haEntities(dev);
+      var q = String(query || "").trim().toLocaleLowerCase();
+      if (!q) return list;
+      var hit = list.filter(function (e) { return e.toLocaleLowerCase().indexOf(q) >= 0; });
+      return hit.concat(list.filter(function (e) { return hit.indexOf(e) < 0; }));
+    },
+    /** Case-insensitive search over name, area, manufacturer, model and entity ids, max `limit` (25). Empty query lists all (sorted). */
     search: function (query, limit) {
       var q = String(query || "").trim().toLocaleLowerCase();
-      var list = AM.store.haDevices.filter(function (d) {
-        return !q || (String(d.name || "") + " " + String(d.area || "")).toLocaleLowerCase().indexOf(q) >= 0;
-      });
+      var list = AM.store.haDevices.filter(function (d) { return !q || haHay(d).indexOf(q) >= 0; });
       list.sort(function (a, b) { return AM.compare(a.name, b.name) || AM.compare(a.area, b.area); });
       return list.slice(0, limit || 25);
     },
@@ -1894,6 +1923,18 @@
         if (score > bestScore) { best = d; bestScore = score; }
       });
       return bestScore >= 4 ? best : null;
+    },
+    /** {device_vendor?, device_product?, area?} from the device's manufacturer / model / area,
+     *  only for fields that are empty in `fields` — never overwrites what is there (issue #7). */
+    fillPatch: function (dev, fields) {
+      var out = {};
+      if (!dev || !fields) return out;
+      var src = { device_vendor: dev.manufacturer, device_product: dev.model, area: dev.area };
+      Object.keys(src).forEach(function (k) {
+        var v = String(src[k] || "").trim();
+        if (v && !String(fields[k] || "").trim()) out[k] = v;
+      });
+      return out;
     },
     /** Absolute HA frontend URL of a device page (the ingress iframe must not navigate itself). */
     deviceUrl: function (id) {

@@ -99,7 +99,8 @@
  *          HTMLImageElement | HTMLVideoElement | ImageData.
  *   Passes (stop at the first that finds anything unless exhaustive): original (<= 2048
  *   px), greycast (grayscale + contrast stretch, the v2.0.5 fix), inverted, 2x upscale
- *   (small images), 2x2 overlapping tiles (big photos), then native BarcodeDetector if
+ *   (small images), 2x2 overlapping tiles (big photos), a white margin at 0.5x/0.35x
+ *   (tight crops that lost their quiet zone), then native BarcodeDetector if
  *   present. Returns ALL distinct codes. Rejects with err.code "not_found" (err.passes),
  *   "unsupported_image" (e.g. HEIC the browser cannot decode) or "unsupported".
  *

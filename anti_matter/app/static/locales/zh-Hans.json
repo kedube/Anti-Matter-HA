@@ -353,6 +353,7 @@
   "empty.type_code": "输入代码",
   "empty.vault_body": "扫描设备或包装盒上的配对代码标签，或手动输入代码。所有内容都只保存在你的 Home Assistant 上。",
   "empty.vault_title": "保险库是空的",
+  "error.backup_failed": "无法写入备份。请检查 Home Assistant 的可用空间和加载项日志。",
   "error.bad_request": "请求未被接受。",
   "error.category_name_taken": "已存在名为“{name}”的分类。",
   "error.category_not_found": "该分类已不存在，可能已在其他设备上被删除。",
@@ -362,6 +363,7 @@
   "error.duplicate": "此代码已保存为“{name}”。",
   "error.ha_attribute_not_found": "Home Assistant 中没有此属性。",
   "error.http_error": "加载项返回了错误（{status}）。",
+  "error.import_too_large": "文件过大（超过 16 MB）。未做任何更改。",
   "error.invalid_code": "无法将已保存的代码生成标签。",
   "error.invalid_import": "此文件不是 Anti-Matter 导出文件。未做任何更改。",
   "error.invalid_request": "部分值未被接受。请检查表单后重试。",
@@ -379,6 +381,7 @@
   "error.unknown": "出错了（{status}）。请重试。",
   "error.unsupported_media_type": "只有 PNG 和 SVG 标签可以保存到 Home Assistant 媒体。",
   "error.unsupported_protocol": "此协议不支持该类型的标签。",
+  "error.vault_write_failed": "无法保存保险库，因此未做任何更改。请检查 Home Assistant 的可用空间和加载项日志。",
   "error.zwave_device_not_found": "Z-Wave 设备数据库中没有此设备。",
   "filter.active": {
     "other": "{count} 个已启用"
@@ -411,6 +414,8 @@
   "filter.vendor": "厂商",
   "filter.yes": "是",
   "ha.device_in_area": "{name} — {area}",
+  "ha.fill_empty": "从 Home Assistant 填写空白字段",
+  "ha.filled": "已从 Home Assistant 填写空白字段。",
   "homekit.category_airConditioner": "空调",
   "homekit.category_airPurifier": "空气净化器",
   "homekit.category_airport": "AirPort",
@@ -445,6 +450,7 @@
   "import.add_n": {
     "other": "添加 {count} 个代码"
   },
+  "import.backup_failed": "保险库未被替换",
   "import.choose": "选择要导入的文件",
   "import.choose_hint": "选择一个 anti-matter-export.json 文件。下一步再选择合并或替换。",
   "import.desc": "包含所有代码和分类的 JSON 文件。",
@@ -737,7 +743,7 @@
   "scan.paused": "已暂停在此帧 · 用时 {seconds} 秒读取",
   "scan.photo_fail": "无法从该图片中读取 QR 码。",
   "scan.photo_format_tip": "请保存为 JPEG 或 PNG（截图也可以），然后重试。",
-  "scan.photo_tips": "让标签充满画面，并避免反光。也支持截图。",
+  "scan.photo_tips": "在代码周围留出白边，并避免反光。也支持截图。",
   "scan.pick_low": "8 位 · 保存为 HomeKit",
   "scan.pick_unknown": "未知格式 · 保存为“其他”",
   "scan.pill_dups": {

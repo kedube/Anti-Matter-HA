@@ -353,6 +353,7 @@
   "empty.type_code": "コードを入力",
   "empty.vault_body": "デバイスや箱にあるペアリングコードのラベルをスキャンするか、コードを入力してください。データはすべて Home Assistant 内に保存されます。",
   "empty.vault_title": "保管庫は空です",
+  "error.backup_failed": "バックアップを書き込めませんでした。Home Assistant の空き容量とアドオンのログを確認してください。",
   "error.bad_request": "リクエストは受け付けられませんでした。",
   "error.category_name_taken": "「{name}」というカテゴリは既に存在します。",
   "error.category_not_found": "このカテゴリはもう存在しません。別のデバイスで削除された可能性があります。",
@@ -362,6 +363,7 @@
   "error.duplicate": "このコードは「{name}」として既に保存されています。",
   "error.ha_attribute_not_found": "Home Assistant にその属性はありません。",
   "error.http_error": "アドオンがエラーを返しました ({status})。",
+  "error.import_too_large": "ファイルが大きすぎます (16 MB 超)。何も変更されていません。",
   "error.invalid_code": "保存されたコードからラベルを作成できませんでした。",
   "error.invalid_import": "このファイルは Anti-Matter のエクスポートではありません。何も変更されていません。",
   "error.invalid_request": "受け付けられない値があります。フォームを確認して、もう一度お試しください。",
@@ -379,6 +381,7 @@
   "error.unknown": "問題が発生しました ({status})。もう一度お試しください。",
   "error.unsupported_media_type": "Home Assistant のメディアに保存できるのは PNG と SVG のラベルのみです。",
   "error.unsupported_protocol": "このプロトコルはその種類のラベルに対応していません。",
+  "error.vault_write_failed": "保管庫を保存できなかったため、何も変更されていません。Home Assistant の空き容量とアドオンのログを確認してください。",
   "error.zwave_device_not_found": "このデバイスは Z-Wave デバイスデータベースにありません。",
   "filter.active": {
     "other": "{count} 件適用中"
@@ -411,6 +414,8 @@
   "filter.vendor": "ベンダー",
   "filter.yes": "はい",
   "ha.device_in_area": "{name} — {area}",
+  "ha.fill_empty": "空欄を Home Assistant から入力",
+  "ha.filled": "空欄を Home Assistant から入力しました。",
   "homekit.category_airConditioner": "エアコン",
   "homekit.category_airPurifier": "空気清浄機",
   "homekit.category_airport": "AirPort",
@@ -445,6 +450,7 @@
   "import.add_n": {
     "other": "{count} 件のコードを追加"
   },
+  "import.backup_failed": "保管庫は置き換えられていません",
   "import.choose": "インポートするファイルを選択",
   "import.choose_hint": "anti-matter-export.json ファイルを選んでください。次に統合か置き換えを選びます。",
   "import.desc": "すべてのコードとカテゴリを含む JSON ファイルです。",
@@ -737,7 +743,7 @@
   "scan.paused": "このフレームで一時停止 · {seconds} 秒で読み取り",
   "scan.photo_fail": "その画像から QR コードを読み取れませんでした。",
   "scan.photo_format_tip": "JPEG または PNG で保存して (スクリーンショットも可)、もう一度お試しください。",
-  "scan.photo_tips": "ラベルをフレームいっぱいに収め、光の反射を避けてください。スクリーンショットも使えます。",
+  "scan.photo_tips": "コードの周りに白い余白を残し、光の反射を避けてください。スクリーンショットも使えます。",
   "scan.pick_low": "8 桁 · HomeKit として保存",
   "scan.pick_unknown": "不明な形式 · 「その他」として保存",
   "scan.pill_dups": {

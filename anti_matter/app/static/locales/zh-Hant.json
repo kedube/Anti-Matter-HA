@@ -353,6 +353,7 @@
   "empty.type_code": "輸入代碼",
   "empty.vault_body": "掃描裝置或包裝盒上的配對代碼標籤，或手動輸入代碼。所有內容都只會儲存在你的 Home Assistant 上。",
   "empty.vault_title": "保險庫是空的",
+  "error.backup_failed": "無法寫入備份。請檢查 Home Assistant 的可用空間與附加元件記錄。",
   "error.bad_request": "要求未被接受。",
   "error.category_name_taken": "已有名為「{name}」的分類。",
   "error.category_not_found": "此分類已不存在，可能已在其他裝置上被刪除。",
@@ -362,6 +363,7 @@
   "error.duplicate": "此代碼已儲存為「{name}」。",
   "error.ha_attribute_not_found": "Home Assistant 中沒有此屬性。",
   "error.http_error": "附加元件回傳了錯誤（{status}）。",
+  "error.import_too_large": "檔案太大（超過 16 MB）。未進行任何變更。",
   "error.invalid_code": "無法將已儲存的代碼製作成標籤。",
   "error.invalid_import": "此檔案不是 Anti-Matter 匯出檔。未進行任何變更。",
   "error.invalid_request": "部分數值未被接受。請檢查表單後再試一次。",
@@ -379,6 +381,7 @@
   "error.unknown": "發生錯誤（{status}）。請再試一次。",
   "error.unsupported_media_type": "只有 PNG 和 SVG 標籤可以儲存到 Home Assistant 媒體。",
   "error.unsupported_protocol": "此通訊協定不支援這種標籤。",
+  "error.vault_write_failed": "無法儲存保險庫，因此未進行任何變更。請檢查 Home Assistant 的可用空間與附加元件記錄。",
   "error.zwave_device_not_found": "Z-Wave 裝置資料庫中沒有此裝置。",
   "filter.active": {
     "other": "已套用 {count} 個"
@@ -411,6 +414,8 @@
   "filter.vendor": "廠商",
   "filter.yes": "是",
   "ha.device_in_area": "{name} — {area}",
+  "ha.fill_empty": "從 Home Assistant 填入空白欄位",
+  "ha.filled": "已從 Home Assistant 填入空白欄位。",
   "homekit.category_airConditioner": "冷氣機",
   "homekit.category_airPurifier": "空氣清淨機",
   "homekit.category_airport": "AirPort",
@@ -445,6 +450,7 @@
   "import.add_n": {
     "other": "新增 {count} 個代碼"
   },
+  "import.backup_failed": "保險庫未被取代",
   "import.choose": "選擇要匯入的檔案",
   "import.choose_hint": "選擇 anti-matter-export.json 檔案。下一步再選擇合併或取代。",
   "import.desc": "包含所有代碼和分類的 JSON 檔案。",
@@ -737,7 +743,7 @@
   "scan.paused": "已暫停在此畫面 · 耗時 {seconds} 秒讀取",
   "scan.photo_fail": "無法從該圖片讀取 QR 碼。",
   "scan.photo_format_tip": "請儲存為 JPEG 或 PNG（螢幕截圖也可以），然後再試一次。",
-  "scan.photo_tips": "讓標籤填滿畫面，並避免反光。螢幕截圖也可以。",
+  "scan.photo_tips": "在代碼周圍保留白邊，並避免反光。螢幕截圖也可以。",
   "scan.pick_low": "8 位數 · 儲存為 HomeKit",
   "scan.pick_unknown": "未知格式 · 儲存為「其他」",
   "scan.pill_dups": {

@@ -580,7 +580,7 @@
     if (!file) return false;
     wireImportOnce();
     IMP = { file: file, text: "", data: null, error: null, mode: "merge", summary: null };
-    if (file.size > 16 * 1024 * 1024) IMP.error = t("error.too_large");
+    if (file.size > 16 * 1024 * 1024) IMP.error = t("error.import_too_large");
     else {
       try {
         IMP.text = await file.text();
@@ -680,7 +680,14 @@
     var btn = AM.byId("import-confirm");
     btn.disabled = true;
     try {
-      if (!merge) { try { await AM.api("/backup", { method: "POST" }); } catch (e) { /* best effort safety copy */ } }
+      if (!merge) {
+        // The dialog promises a safety copy first: without one, Replace does not run.
+        try { await AM.api("/backup", { method: "POST" }); } catch (e) {
+          if (IMP === imp) AM.reportError(e, { alert: true, title: t("import.backup_failed") });
+          return;
+        }
+        if (IMP !== imp) return; // closed while the backup ran: cancel the replace
+      }
       var before = AM.store.vault.codes.length;
       var v = await AM.api("/import", { method: "POST", body: { data: imp.text, merge: merge } });
       AM.sheets.close(IO, v, "api");
@@ -694,7 +701,7 @@
       });
     } catch (e) {
       if (e && e.code === "invalid_import" && IMP === imp) { imp.error = e.userMessage || t("error.invalid_import"); renderImport(); }
-      else AM.reportError(e);
+      else AM.reportError(e, { alert: true }); // a failed restore must not pass as a toast
     } finally {
       imp.busy = false;
       btn.disabled = false;

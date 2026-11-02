@@ -157,3 +157,29 @@ def test_legacy_lucide_category_icons_are_healed(client):
     cat = client.post("/api/categories", json={"name": "Old", "icon": "box"}).json()
     assert cat["icon"] == "package-variant-closed"
     assert client.post("/api/categories", json={"name": "Mdi", "icon": "mdi:home"}).json()["icon"] == "home"
+
+
+def test_import_write_failure_keeps_vault(client, app_module, monkeypatch):
+    """A valid file whose write fails is not reported as an invalid file (issue #4)."""
+    client.post("/api/codes", json={"name": "Keep", "manual_code": "3497-011-2332"})
+
+    def disk_full(vault):
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(app_module.storage, "_write_unlocked", disk_full)
+    detail = _detail(client.post("/api/import", json={"data": json.dumps({"codes": []}), "merge": False}),
+                     500, "vault_write_failed")
+    assert "No space left" in detail["message"]
+    kept = json.loads(app_module.storage.path.read_text(encoding="utf-8"))["codes"]
+    assert [c["name"] for c in kept] == ["Keep"]
+
+
+def test_backup_failure_is_reported(client, app_module, monkeypatch):
+    """Replace-import aborts on this error, so it must be a coded error, not a bare 500."""
+    client.post("/api/codes", json={"name": "A", "manual_code": "3497-011-2332"})
+
+    def read_only(keep_count=10):
+        raise OSError(30, "Read-only file system")
+
+    monkeypatch.setattr(app_module.storage, "backup_local_copy", read_only)
+    _detail(client.post("/api/backup"), 500, "backup_failed")

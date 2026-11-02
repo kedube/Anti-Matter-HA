@@ -22,7 +22,7 @@ class HomeAssistantClient:
     def __init__(self) -> None:
         self.token = os.environ.get("SUPERVISOR_TOKEN", "")
         self.enabled = bool(self.token)
-        self._devices_cache: Optional[list[dict[str, str]]] = None
+        self._devices_cache: Optional[list[dict[str, Any]]] = None
         self._devices_cache_at = 0.0
 
     def _headers(self) -> dict[str, str]:
@@ -67,12 +67,13 @@ class HomeAssistantClient:
             ids = [e for e in ids if e.startswith(prefix)]
         return sorted(ids)
 
-    async def list_devices(self) -> list[dict[str, str]]:
-        """[{id, name, area}] for every HA device with at least one entity — via the
-        template API's `device_id()`/`device_attr()`/`area_name()` functions (no REST
-        device-registry endpoint exists). Lets the UI link to a device's own page
-        (`/config/devices/device/<id>`) without ever needing an entity_id itself, and
-        the `area` disambiguates same-named devices in the picker / auto-match.
+    async def list_devices(self) -> list[dict[str, Any]]:
+        """[{id, name, area, manufacturer, model, entities}] for every HA device with at
+        least one entity — via the template API's `device_id()`/`device_attr()`/
+        `area_name()`/`device_entities()` functions (no REST device-registry endpoint
+        exists). Lets the UI link to a device's own page (`/config/devices/device/<id>`);
+        `area` and the sorted `entities` ids tell same-named devices apart in the picker
+        (issue #9), and `manufacturer`/`model` fill a linked code's empty fields (#7).
 
         device_id() is only a template *function* in HA, not a registered filter —
         `states | map('device_id')` fails, so this collects ids via a plain for-loop
@@ -97,7 +98,10 @@ class HomeAssistantClient:
             "{% for did in ns.ids %}"
             "{% set ns.items = ns.items + [{'id': did,"
             " 'name': device_attr(did, 'name_by_user') or device_attr(did, 'name') or did,"
-            " 'area': area_name(did) or ''}] %}"
+            " 'area': area_name(did) or '',"
+            " 'manufacturer': device_attr(did, 'manufacturer') or '',"
+            " 'model': device_attr(did, 'model') or '',"
+            " 'entities': device_entities(did) | sort}] %}"
             "{% endfor %}"
             "{{ ns.items | to_json }}"
         )
@@ -121,6 +125,9 @@ class HomeAssistantClient:
                 "id": str(d["id"]),
                 "name": str(d.get("name") or d["id"]),
                 "area": str(d.get("area") or ""),
+                "manufacturer": str(d.get("manufacturer") or ""),
+                "model": str(d.get("model") or ""),
+                "entities": [str(e) for e in d.get("entities") or [] if isinstance(e, str)],
             }
             for d in devices
             if isinstance(d, dict) and d.get("id")
