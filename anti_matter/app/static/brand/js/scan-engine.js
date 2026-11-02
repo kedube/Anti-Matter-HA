@@ -117,7 +117,7 @@
   // Loaded twice (e.g. a second script tag)? Keep the first instance.
   if (global.AntiMatterScanEngine && global.AntiMatterScanEngine.createCameraSession) return;
 
-  var VERSION = "3.0.1";
+  var VERSION = "3.0.2";
   var doc = global.document;
 
   // Captured at load: document.currentScript is only set while this file executes.

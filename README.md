@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="anti_matter/CHANGELOG.md"><img src="https://img.shields.io/badge/version-3.0.1-blue" alt="Version 3.0.0"></a>
+  <a href="anti_matter/CHANGELOG.md"><img src="https://img.shields.io/badge/version-3.0.2-blue" alt="Version 3.0.0"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/Home%20Assistant-add--on-41BDF5?logo=homeassistant&logoColor=white" alt="Home Assistant add-on">
   <img src="https://img.shields.io/badge/aarch64-yes-green" alt="Supports aarch64">

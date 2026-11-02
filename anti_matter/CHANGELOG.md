@@ -3,6 +3,27 @@
 Detailed per-commit history is in [git log](https://github.com/Cl3tus/Anti-Matter-HA/commits/main).
 This file summarizes the notable changes by theme.
 
+## 3.0.2 — tight photos, look-alike devices and safer Replace
+
+- **Photos of tightly cropped labels now decode** ([#6](https://github.com/Cl3tus/Anti-Matter-HA/issues/6)). A QR
+  cropped right up to its edge has lost the white margin the reader needs to find it. Photo decoding now ends with a
+  try that adds a white border and scales the image to 0.5× and 0.35×, as the reporter's tests showed. The photo tip
+  now says to keep some white space around the code; it used to say "fill the frame".
+- **Devices with the same name can be told apart** ([#9](https://github.com/Cl3tus/Anti-Matter-HA/issues/9)). The
+  Home Assistant device list shows each device's area, manufacturer, model and entity IDs, and search covers them
+  all. Devices that share a name and an area are labelled with their first entity ID. Before, typing such a label
+  silently linked the first of the look-alikes; now typed text links only when it matches exactly one device.
+- **Linking fills Vendor, Product and Area** ([#7](https://github.com/Cl3tus/Anti-Matter-HA/issues/7)). Picking a
+  device fills only the **empty** fields from its manufacturer, model and area; anything you typed is kept. For codes
+  that are already linked, **Fill empty fields from Home Assistant** is in the editor and in the details **⋯** menu.
+- **Replace never runs without its safety backup** ([#4](https://github.com/Cl3tus/Anti-Matter-HA/issues/4)). If the
+  backup fails, the vault is not replaced and an alert says why. Closing the dialog while the backup runs cancels the
+  replace. A vault that cannot be written (for example, the disk is full) is now reported as such, not as "not an
+  Anti-Matter export", and failed imports show an alert instead of a toast. The size limit message now says 16 MB.
+- **`conn_matter` is documented** ([#5](https://github.com/Cl3tus/Anti-Matter-HA/issues/5)). It is the **Thread**
+  connectivity tick, not "is a Matter device" (that is `code_type`). The Documentation tab now explains the fields
+  of an exported file.
+
 ## 3.0.1 — moving a vault over from another install
 
 - **Imported HomeKit codes are repaired right away.** An export or backup from 2.x can hold HomeKit pairing codes

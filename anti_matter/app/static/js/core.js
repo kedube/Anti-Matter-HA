@@ -21,7 +21,7 @@
 
   var doc = global.document;
   var I18N = global.AntiMatterI18n;
-  var VERSION = "3.0.1";
+  var VERSION = "3.0.2";
   var V = "?v=" + VERSION;
   var ICONS_URL = "./static/brand/icons.svg" + V;
   var ASSETS = "./static/assets/";
