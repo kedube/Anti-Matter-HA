@@ -1,9 +1,11 @@
 name: Release
 
-# Bump the version (python3 tools/ci/version.py bump X.Y.Z), fill in the CHANGELOG entry and
-# push to main. When anti_matter/config.yaml carries a version that has no tag yet, this
-# runs the full CI, tags vX.Y.Z, publishes a GitHub release with that CHANGELOG section,
-# and mirrors anti_matter/ into the add-on store repository (HA-Addons).
+# Either run the "Bump version" workflow (bump.yml: pick major / minor / patch; it commits
+# the bump and starts this workflow), or bump locally (python3 tools/ci/version.py bump
+# minor|major|patch|X.Y.Z), fill in the CHANGELOG entry and push to main. When
+# anti_matter/config.yaml carries a version that has no tag yet, this runs the full CI,
+# tags vX.Y.Z, publishes a GitHub release with that CHANGELOG section, and mirrors
+# anti_matter/ into the add-on store repository (HA-Addons).
 
 on:
   push:
@@ -38,7 +40,7 @@ jobs:
             echo "::notice::v$version is already released — nothing to do"
           else
             echo "release=true" >> "$GITHUB_OUTPUT"
-            python3 tools/ci/version.py notes "$version" > /dev/null # fail early without a CHANGELOG entry
+            python3 tools/ci/version.py notes "$version" > /dev/null # fail early without a filled-in CHANGELOG entry
           fi
 
   ci:
