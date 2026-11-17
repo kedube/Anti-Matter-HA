@@ -152,8 +152,13 @@ class CategoryUpdate(BaseModel):
         return normalize_category_icon(value) if value is not None else value
 
 
+# Longest code name the API accepts (the editor and scanner inputs cap at the same 200).
+# Request models only: a stored vault that already holds a longer name must still load.
+MAX_CODE_NAME = 200
+
+
 class MatterCodeCreate(BaseModel):
-    name: str
+    name: str = Field(max_length=MAX_CODE_NAME)
     code_type: str = "matter"
     device_type: str = ""
     device_vendor: str = ""
@@ -179,7 +184,7 @@ class MatterCodeCreate(BaseModel):
 
 
 class MatterCodeUpdate(BaseModel):
-    name: Optional[str] = None
+    name: Optional[str] = Field(default=None, max_length=MAX_CODE_NAME)
     code_type: Optional[str] = None
     device_type: Optional[str] = None
     device_vendor: Optional[str] = None

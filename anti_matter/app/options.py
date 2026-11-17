@@ -16,11 +16,26 @@ from pathlib import Path
 OPTIONS_PATH = Path(os.environ.get("ANTIMATTER_OPTIONS", "/data/options.json"))
 
 
+_options_cache: tuple[tuple, dict] | None = None
+
+
 def load_options() -> dict:
+    """Parsed options.json. /api/info (polled every few seconds) reads options on each
+    call, so the parse is cached until the file's mtime/size changes: one stat() per call
+    instead of a read + parse on the event loop."""
+    global _options_cache
     try:
-        return json.loads(OPTIONS_PATH.read_text(encoding="utf-8"))
-    except Exception:
+        st = OPTIONS_PATH.stat()
+    except OSError:
         return {}
+    key = (str(OPTIONS_PATH), st.st_mtime_ns, st.st_size)
+    if _options_cache is None or _options_cache[0] != key:
+        try:
+            data = json.loads(OPTIONS_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            data = {}
+        _options_cache = (key, data if isinstance(data, dict) else {})
+    return _options_cache[1]
 
 
 def opt(group: str, key: str, default=None):

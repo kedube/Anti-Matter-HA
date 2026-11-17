@@ -31,6 +31,10 @@ text>, ...extra}}``. ``error`` is a stable machine-readable code the UI localize
     media_unavailable            500     save-to-media: /media folder missing or not writable
     ha_attribute_not_found       404     GET /api/ha/attribute
     invalid_request              422     request body/query failed validation; extra ``errors``
+    vault_unreadable             500     the vault or Trash file on disk is not valid JSON / not a
+                                         vault (fix it, or replace-import a backup)
+    forbidden                    403     request did not come through HA ingress (only when
+                                         running as an add-on, i.e. SUPERVISOR_TOKEN is set)
     not_found / method_not_allowed / bad_request / http_error
                                          fallback for framework errors (unknown route etc.)
 
@@ -42,30 +46,35 @@ expected outcome rather than an error.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import io
 import json
 import logging
 import os
 import re
+import xml.etree.ElementTree as ET
 from contextlib import asynccontextmanager
 from datetime import datetime
+from functools import lru_cache
 from typing import Any, Optional
 
+import httpx
 import uvicorn
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
+from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.staticfiles import StaticFiles
 from starlette.types import Scope
 from pydantic import BaseModel
 from qrcode.exceptions import DataOverflowError
 
+import matter_dcl
 from backup_schedule import is_due, load_settings, mark_ran, period_key, save_settings
-from ha_client import HomeAssistantClient
+from ha_client import MISSING as HA_MISSING, HomeAssistantClient
 from matter_dcl import fetch_model_info, fetch_vendor_info
 from models import (
     Category,
@@ -81,7 +90,12 @@ from options import UI_LANGUAGES, norm_language, norm_theme, opt
 from matter_label import label_png_bytes
 from matter_qr_image import qr_png_bytes as matter_qr_png_bytes
 from matter_payload import normalize_fields, qr_encode_payload
-from matter_setup_payload import ParsedSetupPayload, parse_manual_payload, parse_qr_payload
+from matter_setup_payload import (
+    ParsedSetupPayload,
+    ascii_digits,
+    parse_manual_payload,
+    parse_qr_payload,
+)
 from homekit_label import card_svg_for_code
 from homekit_qr_image import qr_png_bytes as homekit_qr_png_bytes
 from homekit_payload import (
@@ -103,7 +117,7 @@ from zwave_payload import (
 from zwave_device_db import lookup_device as lookup_zwave_device
 from models import Vault
 from qr_svg import DEFAULT_BORDER as QR_DEFAULT_BORDER, clamp_border, qr_svg
-from storage import VaultStorage
+from storage import VaultStorage, VaultUnreadableError
 
 logging.basicConfig(level=logging.INFO)
 _LOGGER = logging.getLogger("anti_matter")
@@ -122,6 +136,7 @@ SUPPORTED_UI_LANGUAGES: list[str] = list(UI_LANGUAGES)
 LOCALES_DIR = os.path.join(STATIC_DIR, "locales")
 
 
+@lru_cache(maxsize=1)  # static files ship with the add-on; /api/info is polled
 def _translation_files() -> list[str]:
     """UI languages that have a static/locales/<code>.json file right now. The UI loads only
     these (others fall back to English without a failing request, so no console 404)."""
@@ -137,15 +152,23 @@ MAX_MEDIA_UPLOAD_BYTES = 8 * 1024 * 1024
 
 # --- Logging redaction: never write pairing codes / QR payloads to the log ---
 _REDACT_PATTERNS = [
-    re.compile(r"MT:[A-Za-z0-9./+_-]+", re.I),
+    re.compile(r"MT:[A-Za-z0-9./+_*-]+", re.I),  # incl. "*"-joined multi-device payloads
     re.compile(r"X-HM://[A-Za-z0-9]+", re.I),
+    # Any run of 9+ digits (Z-Wave QR/DSK, raw manual codes). No upper bound and no \b:
+    # "\b\d{9,90}\b" could not match inside a longer run, so a full 90-140 digit Z-Wave
+    # SmartStart QR (it embeds the whole DSK) was logged in clear.
+    re.compile(r"\d{9,}"),
+    re.compile(r"\b\d{5}(?:-\d{1,5}){2,7}\b"),  # Z-Wave DSK groups, 21-digit Matter formatted
     re.compile(r"\b\d{4}-\d{3}-\d{4}\b"),  # Matter manual code, formatted
-    re.compile(r"\b\d{9,90}\b"),  # any long digit run (Z-Wave DSK/QR, raw manual codes)
+    re.compile(r"\b\d{3}-\d{2}-\d{3}\b"),  # HomeKit pairing code, formatted
+    re.compile(r"\b\d{8}\b"),  # HomeKit pairing code, bare
 ]
+# Newlines etc. in client-supplied text would forge extra log lines.
+_CONTROL_CHARS = re.compile(r"[\x00-\x1f\x7f]")
 
 
 def _redact(text: Any) -> str:
-    out = str(text or "")
+    out = _CONTROL_CHARS.sub(" ", str(text or ""))
     for pat in _REDACT_PATTERNS:
         out = pat.sub("***", out)
     return out[:300]
@@ -222,8 +245,16 @@ def _find_code(vault, code_id: str) -> MatterCode:
 
 def _normalize_manual_key(value: str) -> str:
     """Matter manual-code digits (11-digit short or 21-digit long form), else ''."""
-    digits = "".join(c for c in (value or "") if c.isdigit())
+    digits = ascii_digits(value)
     return digits if len(digits) in (11, 21) else ""
+
+
+# The duplicate check runs on every keystroke in the editor/scanner and re-derives the
+# identity of every stored code each time (a Z-Wave QR extraction alone is up to ~150
+# SHA-1 checksums). These are pure functions of the stored strings, so cache them.
+@lru_cache(maxsize=8192)
+def _zwave_qr_key(qr_payload: str) -> str:
+    return zwave_extract_qr(qr_payload)
 
 
 def _normalize_qr_key(value: str) -> str:
@@ -237,22 +268,23 @@ def _normalize_homekit_qr_key(value: str) -> str:
 
 
 def _code_protocol(candidate: dict | MatterCode) -> str:
-    if isinstance(candidate, MatterCode):
-        data = candidate.model_dump(mode="json")
+    if isinstance(candidate, MatterCode):  # attribute reads: no model_dump per stored code
+        code_type, raw_qr = candidate.code_type, candidate.qr_payload
     else:
-        data = candidate
-    ct = str(data.get("code_type") or "matter").strip().lower()
+        code_type, raw_qr = candidate.get("code_type"), candidate.get("qr_payload")
+    ct = str(code_type or "matter").strip().lower()
     if ct in ("homekit", "zwave", "other"):
         return ct
-    qr = str(data.get("qr_payload") or "").strip().upper()
+    qr = str(raw_qr or "").strip().upper()
     if qr.startswith("X-HM://"):
         return "homekit"
-    if zwave_extract_qr(str(data.get("qr_payload") or "")):
+    if _zwave_qr_key(str(raw_qr or "")):
         return "zwave"
     return "matter"
 
 
-def _matter_identities(manual_code: str, qr_payload: str) -> list[ParsedSetupPayload]:
+@lru_cache(maxsize=8192)
+def _matter_identities(manual_code: str, qr_payload: str) -> tuple[ParsedSetupPayload, ...]:
     """Every device a Matter code identifies: each ``*``-separated QR payload plus the
     manual code (Verhoeff-checked). Unparseable parts are skipped."""
     out: list[ParsedSetupPayload] = []
@@ -269,7 +301,7 @@ def _matter_identities(manual_code: str, qr_payload: str) -> list[ParsedSetupPay
             out.append(parse_manual_payload(manual_key))
         except ValueError:
             pass
-    return out
+    return tuple(out)
 
 
 def _same_matter_device(a: ParsedSetupPayload, b: ParsedSetupPayload) -> bool:
@@ -285,26 +317,34 @@ def _same_matter_device(a: ParsedSetupPayload, b: ParsedSetupPayload) -> bool:
     return a.short_discriminator == b.short_discriminator
 
 
-def _homekit_pins(manual_code: str, qr_payload: str) -> set[str]:
+@lru_cache(maxsize=8192)
+def _homekit_pins(manual_code: str, qr_payload: str) -> frozenset[str]:
     """8-digit pairing codes of a HomeKit code: typed digits and/or decoded from X-HM://."""
     pins = {homekit_pairing_digits(manual_code or "")}
     if parse_setup_uri(qr_payload or ""):
         pins.add(homekit_decode_pairing(qr_payload or ""))
     pins.discard("")
-    return pins
+    return frozenset(pins)
 
 
-def _zwave_dsks(manual_code: str, qr_payload: str) -> set[str]:
+def _homekit_setup_id(qr_payload: str) -> str:
+    """The 4-char setup ID at the end of an X-HM:// URI ('' when there is none)."""
+    parsed = parse_setup_uri(qr_payload or "")
+    return parsed["setup_id"] if parsed else ""
+
+
+@lru_cache(maxsize=8192)
+def _zwave_dsks(manual_code: str, qr_payload: str) -> frozenset[str]:
     """40-digit DSKs of a Z-Wave code: a bare DSK and/or the one inside a SmartStart QR."""
     dsks: set[str] = set()
     manual = zwave_digits_only(manual_code or "")
     if len(manual) == 40:
         dsks.add(manual)
-    qr = zwave_extract_qr(qr_payload or "")
+    qr = _zwave_qr_key(qr_payload or "")
     parsed = zwave_parse_qr(qr) if qr else None
     if parsed:
         dsks.add(zwave_digits_only(parsed["dsk"]))
-    return dsks
+    return frozenset(dsks)
 
 
 def _other_key(value: str) -> str:
@@ -319,7 +359,9 @@ def _find_duplicate_code(
 
     - matter: same 11/21-digit manual code, same MT: string (case-insensitive), or any
       pair of identities (manual and/or each ``*`` QR payload) that _same_matter_device.
-    - homekit: shared 8-digit pairing code (typed or decoded from the URI), or same URI.
+    - homekit: shared 8-digit pairing code (typed or decoded from the URI), or same URI —
+      unless both URIs carry a setup ID and those differ: then they are two accessories
+      that happen to share a PIN (e.g. bridges left on a default PIN).
     - zwave: shared 40-digit DSK (bare or inside the SmartStart QR), or same QR digits.
     - other: manual or QR equal after whitespace collapse, case-insensitively.
     """
@@ -336,21 +378,25 @@ def _find_duplicate_code(
 
     if proto == "zwave":
         dsks = _zwave_dsks(manual, qr)
-        qr_key = zwave_extract_qr(qr)
+        qr_key = _zwave_qr_key(qr)
         if not dsks and not qr_key:
             return None
         for existing in others():
             if dsks & _zwave_dsks(existing.manual_code, existing.qr_payload):
                 return existing
-            if qr_key and qr_key == zwave_extract_qr(existing.qr_payload):
+            if qr_key and qr_key == _zwave_qr_key(existing.qr_payload):
                 return existing
         return None
     if proto == "homekit":
         pins = _homekit_pins(manual, qr)
         qr_key = _normalize_homekit_qr_key(qr)
+        setup_id = _homekit_setup_id(qr)
         if not pins and not qr_key:
             return None
         for existing in others():
+            their_setup_id = _homekit_setup_id(existing.qr_payload)
+            if setup_id and their_setup_id and setup_id != their_setup_id:
+                continue
             if pins & _homekit_pins(existing.manual_code, existing.qr_payload):
                 return existing
             if qr_key and qr_key == _normalize_homekit_qr_key(existing.qr_payload):
@@ -398,6 +444,9 @@ def run_backup(keep_count: int | None = None) -> dict[str, Any]:
     vault_path = storage.path
     if not vault_path.exists():
         return {"ok": False, "reason": "no_vault"}
+    # Raises VaultUnreadableError for a corrupt vault: copying it would rotate the last
+    # good backups out of the keep_count window.
+    storage.load()
     if keep_count is None:
         keep_count = load_settings(storage.data_dir).get("keep_count", 10)
     dest = storage.backup_local_copy(keep_count=keep_count)
@@ -410,7 +459,9 @@ async def _scheduler_loop() -> None:
             settings = load_settings(storage.data_dir)
             now = datetime.now()
             if is_due(settings, now):
-                result = run_backup(keep_count=settings.get("keep_count", 10))
+                # Only the file copy leaves the event loop; the settings read-modify-write
+                # (mark_ran) stays on it, so it cannot interleave with PUT /api/backup/settings.
+                result = await asyncio.to_thread(run_backup, settings.get("keep_count", 10))
                 mark_ran(storage.data_dir, period_key(settings.get("frequency", "daily"), now))
                 _LOGGER.info("Scheduled backup: %s", result)
         except Exception:
@@ -434,19 +485,43 @@ async def lifespan(app: FastAPI):
         backup_settings.get("frequency"),
         backup_settings.get("keep_count"),
     )
+    # One pooled HTTP client for HA (Supervisor) and the Matter DCL lookups.
+    http = httpx.AsyncClient()
+    ha.http = http
+    matter_dcl.set_http_client(http)
     task = asyncio.create_task(_scheduler_loop())
-    yield
-    task.cancel()
+    try:
+        yield
+    finally:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+        ha.http = None
+        matter_dcl.set_http_client(None)
+        await http.aclose()
 
 
 app = FastAPI(title="Anti-Matter", version=APP_VERSION, lifespan=lifespan)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
-)
+# The API has no authentication of its own: Home Assistant ingress (the Supervisor, at
+# this fixed address) does it. Anything else on the hassio Docker network — e.g. another
+# add-on — must not be able to read every pairing code or replace the vault. Per HA's
+# add-on docs, ingress add-ons only accept the Supervisor's address. Enforced only when
+# running as an add-on (SUPERVISOR_TOKEN set), so local runs and tests are unaffected.
+# No CORS middleware: the UI is served same-origin through ingress.
+INGRESS_PROXY_IP = "172.30.32.2"
+INGRESS_ONLY = bool(os.environ.get("SUPERVISOR_TOKEN"))
+
+
+@app.middleware("http")
+async def ingress_only_middleware(request: Request, call_next):
+    if INGRESS_ONLY and (request.client.host if request.client else "") != INGRESS_PROXY_IP:
+        return JSONResponse(
+            status_code=403,
+            content={"detail": {"error": "forbidden",
+                                "message": "Only reachable through Home Assistant ingress"}},
+        )
+    return await call_next(request)
 
 _GENERIC_HTTP_ERRORS = {
     400: "bad_request",
@@ -467,6 +542,14 @@ async def coded_http_exception_handler(request: Request, exc: StarletteHTTPExcep
             "message": str(exc.detail),
         }
     return await http_exception_handler(request, exc)
+
+
+@app.exception_handler(VaultUnreadableError)
+async def vault_unreadable_handler(request: Request, exc: VaultUnreadableError):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": {"error": "vault_unreadable", "message": str(exc)}},
+    )
 
 
 @app.exception_handler(RequestValidationError)
@@ -634,6 +717,8 @@ async def import_vault(body: ImportBody):
         # The file was fine; writing it was not. The write is atomic, so the old vault stays.
         _LOGGER.error("Vault import could not be written (merge=%s): %s", body.merge, exc)
         raise _api_error(500, "vault_write_failed", f"Could not write the vault: {exc}") from exc
+    except VaultUnreadableError:
+        raise  # merge: the vault on disk is the broken one, not the file being imported
     except Exception as exc:
         # Validation errors quote the offending input (possibly a code): redact for the log.
         _LOGGER.warning("Vault import failed (merge=%s): %s", body.merge, _redact(exc))
@@ -699,11 +784,18 @@ async def create_category(body: CategoryCreate):
     return category
 
 
+def _non_null_updates(body: BaseModel) -> dict[str, Any]:
+    """Fields the client sent, minus explicit nulls. The stored models do not validate on
+    assignment, so a ``{"name": null}`` would be saved as-is, and the vault file would then
+    fail validation on every later load — and stop the add-on from starting."""
+    return {k: v for k, v in body.model_dump(exclude_unset=True).items() if v is not None}
+
+
 @app.put("/api/categories/{category_id}")
 async def update_category(category_id: str, body: CategoryUpdate):
     vault = storage.load()
     category = _find_category(vault, category_id)
-    updates = body.model_dump(exclude_unset=True)
+    updates = _non_null_updates(body)
     if "name" in updates and updates["name"]:
         dup = _find_category_by_name(vault, updates["name"], exclude_id=category_id)
         if dup:
@@ -734,13 +826,15 @@ def _find_bin_category(bin_data: TrashBin, category_id: str) -> Category:
 async def delete_category(category_id: str):
     vault = storage.load()
     category = _find_category(vault, category_id)
-    vault.categories = [c for c in vault.categories if c.id != category_id]
-    storage.save(vault)
     category.deleted_at = utc_now()
     bin_data = storage.load_bin()
     bin_data.categories = [c for c in bin_data.categories if c.id != category_id]
     bin_data.categories.append(category)
+    # Trash first: if the vault write then fails, the category shows up twice (live and
+    # in the Trash) instead of being in neither.
     storage.save_bin(bin_data)
+    vault.categories = [c for c in vault.categories if c.id != category_id]
+    storage.save(vault)
     _LOGGER.info("Category moved to trash: id=%s name=%s", category_id, _redact(category.name))
     return {"ok": True}
 
@@ -749,12 +843,13 @@ async def delete_category(category_id: str):
 async def restore_category(category_id: str):
     bin_data = storage.load_bin()
     category = _find_bin_category(bin_data, category_id)
+    vault = storage.load()
+    category.deleted_at = None
+    vault.categories.append(category)
+    # Vault first: if the Trash write then fails, it shows up twice instead of nowhere.
+    storage.save(vault)
     bin_data.categories = [c for c in bin_data.categories if c.id != category_id]
     storage.save_bin(bin_data)
-    category.deleted_at = None
-    vault = storage.load()
-    vault.categories.append(category)
-    storage.save(vault)
     _LOGGER.info("Category restored from trash: id=%s name=%s", category_id, _redact(category.name))
     return category
 
@@ -789,6 +884,18 @@ async def list_codes(category_id: Optional[str] = Query(None)):
     if category_id:
         codes = [c for c in codes if category_id in c.category_ids]
     return codes
+
+
+def _apply_code_fields_strict(code: MatterCode) -> None:
+    """_apply_code_fields for create/update, refusing input it would silently discard:
+    normalization drops a manual code that is not valid for the protocol (e.g. Matter's
+    11 digits on a code switched to HomeKit) — answer 400 instead of storing nothing."""
+    had_manual = bool((code.manual_code or "").strip())
+    _apply_code_fields(code)
+    if had_manual and not code.manual_code and not code.qr_payload:
+        raise _api_error(
+            400, "invalid_code", f"The manual code is not a valid {code.code_type} code"
+        )
 
 
 def _apply_code_fields(code: MatterCode) -> None:
@@ -834,7 +941,7 @@ async def create_code(body: MatterCodeCreate):
     data = body.model_dump()
     ha_link = data.pop("ha_link", None)
     code = MatterCode(**data)
-    _apply_code_fields(code)
+    _apply_code_fields_strict(code)
     if ha_link:
         code.ha_link = ha_link
     _check_category_ids(vault, code.category_ids)
@@ -853,7 +960,7 @@ async def create_code(body: MatterCodeCreate):
 async def update_code(code_id: str, body: MatterCodeUpdate):
     vault = storage.load()
     code = _find_code(vault, code_id)
-    updates = body.model_dump(exclude_unset=True)
+    updates = _non_null_updates(body)
     if "category_ids" in updates:
         _check_category_ids(vault, updates["category_ids"])
     ha_link = updates.pop("ha_link", None)
@@ -861,8 +968,10 @@ async def update_code(code_id: str, body: MatterCodeUpdate):
         setattr(code, key, value)
     if ha_link is not None:
         code.ha_link = ha_link
-    if "manual_code" in updates or "qr_payload" in updates:
-        _apply_code_fields(code)
+    # code_type too: switching the protocol must re-derive the stored fields, exactly as
+    # creating the code with that type would.
+    if {"manual_code", "qr_payload", "code_type"} & updates.keys():
+        _apply_code_fields_strict(code)
     code.updated_at = utc_now()
     dup = _find_duplicate_code(vault, code.model_dump(mode="json"), exclude_id=code_id)
     if dup:
@@ -885,13 +994,15 @@ def _find_bin_code(bin_data: TrashBin, code_id: str) -> MatterCode:
 async def delete_code(code_id: str):
     vault = storage.load()
     code = _find_code(vault, code_id)
-    vault.codes = [c for c in vault.codes if c.id != code_id]
-    storage.save(vault)
     code.deleted_at = utc_now()
     bin_data = storage.load_bin()
     bin_data.codes = [c for c in bin_data.codes if c.id != code_id]
     bin_data.codes.append(code)
+    # Trash first: if the vault write then fails, the code shows up twice (live and in
+    # the Trash) instead of being in neither.
     storage.save_bin(bin_data)
+    vault.codes = [c for c in vault.codes if c.id != code_id]
+    storage.save(vault)
     _LOGGER.info("Code moved to trash: id=%s name=%s", code_id, _redact(code.name))
     return {"ok": True}
 
@@ -904,11 +1015,12 @@ async def restore_code(code_id: str):
     dup = _find_duplicate_code(vault, code.model_dump(mode="json"))
     if dup:
         raise HTTPException(409, detail=_dup_detail(dup))
-    bin_data.codes = [c for c in bin_data.codes if c.id != code_id]
-    storage.save_bin(bin_data)
     code.deleted_at = None
     vault.codes.append(code)
+    # Vault first: if the Trash write then fails, it shows up twice instead of nowhere.
     storage.save(vault)
+    bin_data.codes = [c for c in bin_data.codes if c.id != code_id]
+    storage.save_bin(bin_data)
     _LOGGER.info("Code restored from trash: id=%s name=%s", code_id, _redact(code.name))
     return code
 
@@ -969,12 +1081,57 @@ def _qr_payload_for(code: MatterCode) -> tuple[str, str]:
     return payload, proto
 
 
-def _qr_svg_response(code: MatterCode, border: int) -> Response:
-    payload, proto = _qr_payload_for(code)
+# Renderers (qrcode / Pillow) are CPU-bound: every route runs them through
+# run_in_threadpool so one slow image never stalls the event loop, and with it every other
+# request. They only read their inputs (no vault writes), so this adds no race.
+
+
+def _render_qr_svg(payload: str, proto: str, border: int) -> str:
     try:
-        svg = qr_svg(payload, proto, border=clamp_border(border))
+        return qr_svg(payload, proto, border=clamp_border(border))
     except DataOverflowError as e:
         raise _qr_too_long() from e
+
+
+def _render_qr_png(payload: str, proto: str) -> bytes:
+    try:
+        return _QR_PNG_RENDERERS[proto](payload)
+    except (DataOverflowError, ValueError) as e:  # qrcode 8: ValueError past version 40
+        raise _qr_too_long() from e
+
+
+def _render_label_png(code: MatterCode, proto: str) -> bytes:
+    try:
+        png = label_png_bytes(
+            code.manual_code or "",
+            code.qr_payload or "",
+            code.name or "",
+            show_logo=(proto != "other"),
+            raw_qr=(proto == "other"),
+        )
+    except ValueError as e:
+        raise _api_error(400, "invalid_code", str(e)) from e
+    except DataOverflowError as e:
+        raise _qr_too_long() from e
+    if not png:
+        raise _api_error(404, "nothing_to_render", "No Matter code to render")
+    return png
+
+
+def _render_card_svg(code: MatterCode, proto: str, *, compact: bool = False, hide_code: bool = False) -> str:
+    try:
+        if proto == "homekit":
+            return card_svg_for_code(code.model_dump(mode="json"), compact=compact, hide_code=hide_code)
+        return zwave_card_svg_for_code(code.model_dump(mode="json"), compact=compact)
+    except ValueError as e:
+        raise _api_error(400, "invalid_code", str(e)) from e
+    except DataOverflowError as e:
+        raise _qr_too_long() from e
+
+
+async def _qr_svg_response(code: MatterCode, border: int) -> Response:
+    payload, proto = _qr_payload_for(code)
+    svg = await run_in_threadpool(_render_qr_svg, payload, proto, border)
     return Response(content=svg, media_type="image/svg+xml")
 
 
@@ -1025,7 +1182,7 @@ async def check_duplicate_code(body: DuplicateCheckBody):
 async def preview_qr_svg(body: CodePayloadBody, border: int = Query(QR_DEFAULT_BORDER)):
     """Vector QR for what an unsaved code WOULD encode once stored (scanner result sheet,
     editor live preview). POST so payloads never land in URLs or logs."""
-    response = _qr_svg_response(_preview_code(body), border)
+    response = await _qr_svg_response(_preview_code(body), border)
     response.headers["Cache-Control"] = "no-store"
     return response
 
@@ -1035,10 +1192,7 @@ async def code_qr_png(code_id: str):
     vault = storage.load()
     code = _find_code(vault, code_id)
     payload, proto = _qr_payload_for(code)
-    try:
-        png = _QR_PNG_RENDERERS[proto](payload)
-    except (DataOverflowError, ValueError) as e:  # qrcode 8: ValueError past version 40
-        raise _qr_too_long() from e
+    png = await run_in_threadpool(_render_qr_png, payload, proto)
     return StreamingResponse(io.BytesIO(png), media_type="image/png")
 
 
@@ -1048,7 +1202,7 @@ async def code_qr_svg(code_id: str, border: int = Query(QR_DEFAULT_BORDER)):
     units, ``?border=N`` quiet zone in modules (default 4, clamped to 0..8)."""
     vault = storage.load()
     code = _find_code(vault, code_id)
-    return _qr_svg_response(code, border)
+    return await _qr_svg_response(code, border)
 
 
 @app.get("/api/codes/{code_id}/label.png")
@@ -1060,20 +1214,7 @@ async def code_label_png(code_id: str):
         raise _api_error(
             400, "unsupported_protocol", "Use card.svg for HomeKit or Z-Wave labels", protocol=proto
         )
-    try:
-        png = label_png_bytes(
-            code.manual_code or "",
-            code.qr_payload or "",
-            code.name or "",
-            show_logo=(proto != "other"),
-            raw_qr=(proto == "other"),
-        )
-    except ValueError as e:
-        raise _api_error(400, "invalid_code", str(e)) from e
-    except DataOverflowError as e:
-        raise _qr_too_long() from e
-    if not png:
-        raise _api_error(404, "nothing_to_render", "No Matter code to render")
+    png = await run_in_threadpool(_render_label_png, code, proto)
     return StreamingResponse(io.BytesIO(png), media_type="image/png")
 
 
@@ -1086,15 +1227,7 @@ async def code_card_svg(code_id: str, compact: bool = False, hide_code: bool = F
         raise _api_error(
             400, "unsupported_protocol", "card.svg is only for HomeKit or Z-Wave codes", protocol=proto
         )
-    try:
-        if proto == "homekit":
-            svg = card_svg_for_code(code.model_dump(mode="json"), compact=compact, hide_code=hide_code)
-        else:
-            svg = zwave_card_svg_for_code(code.model_dump(mode="json"), compact=compact)
-    except ValueError as e:
-        raise _api_error(400, "invalid_code", str(e)) from e
-    except DataOverflowError as e:
-        raise _qr_too_long() from e
+    svg = await run_in_threadpool(_render_card_svg, code, proto, compact=compact, hide_code=hide_code)
     return Response(content=svg, media_type="image/svg+xml; charset=utf-8")
 
 
@@ -1118,12 +1251,62 @@ _SVG_FORBIDDEN = (
 _SVG_REFERENCE = re.compile(r"(?:\bhref\s*=|\burl\s*\()\s*[\"']?\s*([^\s\"'()>]*)", re.I)
 _SVG_SAFE_TARGET = re.compile(r"#|data:image/(?:png|jpe?g|gif|webp);base64,", re.I)
 
+# Second pass over the PARSED document (see _svg_tree_unsafe). Animation elements are
+# refused outright: they can swap an href at runtime, and the app never produces them.
+_SVG_DENIED_TAGS = frozenset({
+    "script", "foreignobject", "iframe", "embed", "object", "handler", "listener",
+    "set", "animate", "animatemotion", "animatetransform",
+})
+_SVG_CSS_UNSAFE = re.compile(r"@import|javascript\s*:|\\[0-9a-f]", re.I)
+_SVG_CSS_URL = re.compile(r"\burl\s*\(\s*[\"']?\s*([^\s\"'()]*)", re.I)
+
+
+def _svg_local_name(name: str) -> str:
+    return name.rsplit("}", 1)[-1].lower()  # "{http://www.w3.org/2000/svg}script" -> "script"
+
+
+def _svg_value_unsafe(value: str) -> bool:
+    return bool(_SVG_CSS_UNSAFE.search(value)) or any(
+        not _SVG_SAFE_TARGET.match(m.group(1)) for m in _SVG_CSS_URL.finditer(value)
+    )
+
+
+def _svg_tree_unsafe(text: str) -> bool:
+    """True unless the parsed SVG is free of script, handlers and external references.
+
+    The raw-text regexes miss what XML itself rewrites: a namespace prefix (``<s:script>``
+    is a script element when ``s`` is bound to the SVG namespace) and character references
+    (``h&#x72;ef``, ``jav&#x61;script:``) that the parser decodes. Here every tag and
+    attribute name is namespace-free and every value is decoded. DOCTYPE/ENTITY is already
+    refused by _SVG_FORBIDDEN, so the parser sees no custom entities.
+    """
+    try:
+        root = ET.fromstring(text.lstrip("\ufeff"))
+    except ET.ParseError:
+        return True
+    if _svg_local_name(root.tag) != "svg":
+        return True
+    for el in root.iter():
+        if _svg_local_name(el.tag) in _SVG_DENIED_TAGS:
+            return True
+        for name, value in el.attrib.items():
+            local = _svg_local_name(name)
+            if local.startswith("on") or local == "base":  # handlers, xml:base
+                return True
+            if local in ("href", "src") and not _SVG_SAFE_TARGET.match(value.strip()):
+                return True
+            if _svg_value_unsafe(value):
+                return True
+        if any(t and _svg_value_unsafe(t) for t in (el.text, el.tail)):  # <style> content
+            return True
+    return False
+
 
 async def _read_body_capped(request: Request, limit: int) -> bytes:
     """Raw request body, streamed in chunks; 413 ``too_large`` as soon as it passes ``limit``."""
     too_large = _api_error(413, "too_large", f"Upload exceeds {limit // (1024 * 1024)} MB")
     declared = request.headers.get("content-length", "")
-    if declared.isdigit() and int(declared) > limit:
+    if declared.isascii() and declared.isdigit() and int(declared) > limit:
         raise too_large
     buf = bytearray()
     async for chunk in request.stream():
@@ -1154,11 +1337,23 @@ def _validate_upload(body: bytes, media_type: str) -> None:
     head = text.lstrip("﻿").lstrip()
     if not head.startswith(("<svg", "<?xml")) or "<svg" not in head or "\x00" in text:
         raise _api_error(400, "invalid_upload", "Not an SVG image")
-    unsafe = any(p.search(text) for p in _SVG_FORBIDDEN) or any(
-        not _SVG_SAFE_TARGET.match(m.group(1)) for m in _SVG_REFERENCE.finditer(text)
+    unsafe = (
+        any(p.search(text) for p in _SVG_FORBIDDEN)
+        or any(not _SVG_SAFE_TARGET.match(m.group(1)) for m in _SVG_REFERENCE.finditer(text))
+        or _svg_tree_unsafe(text)
     )
     if unsafe:
         raise _api_error(400, "invalid_upload", "SVG contains scripts or external references")
+
+
+def _media_basename(code: MatterCode) -> str:
+    """``antimatter-<name>-<id prefix>``. The id keeps two codes whose names sanitize to the
+    same text ("Lamp 1" / "Lamp/1") from overwriting each other's file; it is sanitized
+    too, since an imported vault may carry any id string. The name part is capped so a
+    very long name cannot exceed the filesystem's 255-byte limit."""
+    safe = re.sub(r"[^\w.-]+", "_", code.name or "code")[:80]
+    short_id = re.sub(r"[^A-Za-z0-9]", "", code.id or "")[:8] or "code"
+    return f"antimatter-{safe}-{short_id}"
 
 
 def _write_media(filename: str, data: bytes | str) -> None:
@@ -1184,7 +1379,7 @@ async def save_code_to_media(code_id: str, request: Request):
     vault = storage.load()
     code = _find_code(vault, code_id)
     proto = _code_protocol(code)
-    safe = re.sub(r"[^\w.-]+", "_", code.name or "code")
+    base = _media_basename(code)
 
     media_type = (request.headers.get("content-type") or "").split(";", 1)[0].strip().lower()
     upload = b""
@@ -1195,48 +1390,23 @@ async def save_code_to_media(code_id: str, request: Request):
                 415, "unsupported_media_type", "Upload must be image/png or image/svg+xml"
             )
         if upload:
-            _validate_upload(upload, media_type)
+            await run_in_threadpool(_validate_upload, upload, media_type)
 
     try:
         MEDIA_DIR.mkdir(parents=True, exist_ok=True)
     except OSError as e:
         raise _api_error(500, "media_unavailable", f"Media folder not available: {e}") from e
 
+    data: bytes | str
     if upload:
-        filename = f"antimatter-{safe}.{_UPLOAD_EXTENSIONS[media_type]}"
-        _write_media(filename, upload)
-        source = "upload"
+        filename, data, source = f"{base}.{_UPLOAD_EXTENSIONS[media_type]}", upload, "upload"
     elif proto in ("homekit", "zwave"):
-        try:
-            if proto == "homekit":
-                svg = card_svg_for_code(code.model_dump(mode="json"))
-            else:
-                svg = zwave_card_svg_for_code(code.model_dump(mode="json"))
-        except ValueError as e:
-            raise _api_error(400, "invalid_code", str(e)) from e
-        except DataOverflowError as e:
-            raise _qr_too_long() from e
-        filename = f"antimatter-{safe}.svg"
-        _write_media(filename, svg)
-        source = "server"
+        svg = await run_in_threadpool(_render_card_svg, code, proto)
+        filename, data, source = f"{base}.svg", svg, "server"
     else:
-        try:
-            png = label_png_bytes(
-                code.manual_code or "",
-                code.qr_payload or "",
-                code.name or "",
-                show_logo=(proto != "other"),
-                raw_qr=(proto == "other"),
-            )
-        except ValueError as e:
-            raise _api_error(400, "invalid_code", str(e)) from e
-        except DataOverflowError as e:
-            raise _qr_too_long() from e
-        if not png:
-            raise _api_error(404, "nothing_to_render", "No Matter code to render")
-        filename = f"antimatter-{safe}.png"
-        _write_media(filename, png)
-        source = "server"
+        png = await run_in_threadpool(_render_label_png, code, proto)
+        filename, data, source = f"{base}.png", png, "server"
+    await run_in_threadpool(_write_media, filename, data)
 
     _LOGGER.info(
         "Saved to media: code=%s file=%s source=%s", code_id, _redact(filename), source
@@ -1260,7 +1430,7 @@ async def ha_areas():
 @app.get("/api/ha/attribute")
 async def ha_attribute(entity_id: str, attribute: str):
     value = await ha.get_attribute(entity_id, attribute)
-    if value is None:
+    if value is HA_MISSING:  # a real attribute may be null: that is still a 200
         raise _api_error(404, "ha_attribute_not_found", "Entity or attribute not found")
     return {"entity_id": entity_id, "attribute": attribute, "value": value}
 

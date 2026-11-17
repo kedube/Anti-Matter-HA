@@ -5,8 +5,10 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import time
-from typing import Any, Optional
+from contextlib import asynccontextmanager
+from typing import Any, AsyncIterator, Optional
 
 import httpx
 
@@ -17,6 +19,15 @@ _LOGGER = logging.getLogger("anti_matter.ha_client")
 # shouldn't re-run it each time — cache the result briefly.
 _DEVICES_CACHE_TTL = 60.0
 
+# HA entity ids are "<domain>.<object_id>" in [a-z0-9_]. Anything else is refused before
+# it reaches the URL: httpx collapses "../", so a crafted id would otherwise send this
+# add-on's Supervisor token to any other Supervisor / Core API path.
+_ENTITY_ID = re.compile(r"[a-z0-9_]+\.[a-z0-9_]+")
+
+MISSING: Any = object()
+"""get_attribute() result when the entity or attribute does not exist (a real attribute
+may legitimately be null/None)."""
+
 
 class HomeAssistantClient:
     def __init__(self) -> None:
@@ -24,6 +35,9 @@ class HomeAssistantClient:
         self.enabled = bool(self.token)
         self._devices_cache: Optional[list[dict[str, Any]]] = None
         self._devices_cache_at = 0.0
+        # Shared, pooled client for the add-on's lifetime (set by main's lifespan). None
+        # (tests, scripts) falls back to a short-lived client per request.
+        self.http: Optional[httpx.AsyncClient] = None
 
     def _headers(self) -> dict[str, str]:
         return {
@@ -31,37 +45,54 @@ class HomeAssistantClient:
             "Content-Type": "application/json",
         }
 
+    @asynccontextmanager
+    async def _session(self) -> AsyncIterator[httpx.AsyncClient]:
+        if self.http is not None:
+            yield self.http
+        else:
+            async with httpx.AsyncClient() as client:
+                yield client
+
     async def get_state(self, entity_id: str) -> Optional[dict[str, Any]]:
-        if not self.enabled:
+        if not self.enabled or not _ENTITY_ID.fullmatch(entity_id or ""):
             return None
         url = f"{SUPERVISOR_CORE}/states/{entity_id}"
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.get(url, headers=self._headers())
-            if resp.status_code == 404:
-                return None
-            resp.raise_for_status()
-            return resp.json()
-
-    async def get_attribute(
-        self, entity_id: str, attribute: str
-    ) -> Optional[Any]:
-        state = await self.get_state(entity_id)
-        if not state:
+        try:
+            async with self._session() as client:
+                resp = await client.get(url, headers=self._headers(), timeout=15.0)
+                if resp.status_code == 404:
+                    return None
+                resp.raise_for_status()
+                state = resp.json()
+        except (httpx.HTTPError, ValueError) as exc:
+            _LOGGER.warning("get_state: HA request failed: %s", exc)
             return None
-        attrs = state.get("attributes") or {}
-        if attribute in attrs:
+        return state if isinstance(state, dict) else None
+
+    async def get_attribute(self, entity_id: str, attribute: str) -> Any:
+        """The attribute's value (which may be None), or MISSING when the entity or the
+        attribute does not exist, or HA could not be reached."""
+        state = await self.get_state(entity_id)
+        attrs = (state or {}).get("attributes")
+        if isinstance(attrs, dict) and attribute in attrs:
             return attrs[attribute]
-        return None
+        return MISSING
 
     async def list_entities(self, domain: Optional[str] = None) -> list[str]:
         if not self.enabled:
             return []
         url = f"{SUPERVISOR_CORE}/states"
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.get(url, headers=self._headers())
-            resp.raise_for_status()
-            states = resp.json()
-        ids = [s["entity_id"] for s in states if "entity_id" in s]
+        try:
+            async with self._session() as client:
+                resp = await client.get(url, headers=self._headers(), timeout=30.0)
+                resp.raise_for_status()
+                states = resp.json()
+        except (httpx.HTTPError, ValueError) as exc:
+            _LOGGER.warning("list_entities: HA request failed: %s", exc)
+            return []
+        if not isinstance(states, list):
+            return []
+        ids = [s["entity_id"] for s in states if isinstance(s, dict) and isinstance(s.get("entity_id"), str)]
         if domain:
             prefix = f"{domain}."
             ids = [e for e in ids if e.startswith(prefix)]
@@ -106,8 +137,10 @@ class HomeAssistantClient:
             "{{ ns.items | to_json }}"
         )
         try:
-            async with httpx.AsyncClient(timeout=20.0) as client:
-                resp = await client.post(url, headers=self._headers(), json={"template": template})
+            async with self._session() as client:
+                resp = await client.post(
+                    url, headers=self._headers(), json={"template": template}, timeout=20.0
+                )
                 resp.raise_for_status()
                 raw = resp.text.strip()
         except httpx.HTTPError as exc:
@@ -144,8 +177,8 @@ class HomeAssistantClient:
         url = f"{SUPERVISOR_CORE}/template"
         body = {"template": "{{ areas() | map('area_name') | list | to_json }}"}
         try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                resp = await client.post(url, headers=self._headers(), json=body)
+            async with self._session() as client:
+                resp = await client.post(url, headers=self._headers(), json=body, timeout=15.0)
                 resp.raise_for_status()
                 raw = resp.text.strip()
         except (httpx.HTTPError, ValueError):

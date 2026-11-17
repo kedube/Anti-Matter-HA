@@ -176,7 +176,9 @@
     const d = digitsOnly(text);
     if (!d.startsWith("90")) return "";
     let best = "";
-    for (let end = 90; end <= Math.min(d.length, 200); end++) {
+    // From the 52-digit minimum (no TLVs), so a short QR followed by other digits in the
+    // same text (e.g. "… PIN 12345") is still found.
+    for (let end = 52; end <= Math.min(d.length, 200); end++) {
       const trial = d.slice(0, end);
       if (parseQrDigits(trial)) best = trial;
     }

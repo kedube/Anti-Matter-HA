@@ -7,16 +7,49 @@ Home Assistant exposes over Samba at \\<HA-IP>\app_configs\<repo-hash>_anti_matt
 from __future__ import annotations
 
 import json
+import logging
 import os
 import shutil
 from pathlib import Path
 from threading import Lock
+from typing import TypeVar
+
+from pydantic import BaseModel
 
 from models import TrashBin, Vault
 
 DEFAULT_DATA_DIR = "/data"
 VAULT_FILENAME = "anti_matter.json"
 BIN_FILENAME = "anti-matter-bin.json"
+
+_LOGGER = logging.getLogger("anti_matter.storage")
+_M = TypeVar("_M", bound=BaseModel)
+
+
+class VaultUnreadableError(Exception):
+    """The vault (or Trash) file exists but is not valid: truncated by a power cut, or
+    a hand edit over Samba gone wrong. The file is left untouched so it can be fixed;
+    a replace-import (or restoring a backup) writes a fresh one."""
+
+    def __init__(self, path: Path, cause: Exception) -> None:
+        self.path = path
+        # Only the exception type: a pydantic message would quote the offending values,
+        # and those may be pairing codes.
+        super().__init__(
+            f"{path.name} could not be read ({type(cause).__name__}). "
+            "Fix the file or import a backup to replace it."
+        )
+
+
+def atomic_write_text(path: Path, text: str) -> None:
+    """Write ``text`` to ``path`` via a fsynced temp file + rename, so a crash or power cut
+    leaves either the old file or the new one, never a truncated mix."""
+    tmp = path.with_suffix(".tmp")
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write(text)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
 
 
 def _repair_homekit_codes(codes) -> bool:
@@ -44,6 +77,13 @@ def _resolve_data_dir(data_dir: str | None) -> Path:
     )
 
 
+def _read_model(path: Path, model: type[_M]) -> _M:
+    try:
+        return model.model_validate(json.loads(path.read_text(encoding="utf-8")))
+    except (OSError, ValueError) as exc:  # ValueError: JSONDecodeError, pydantic, bad UTF-8
+        raise VaultUnreadableError(path, exc) from exc
+
+
 class VaultStorage:
     def __init__(self, data_dir: str | None = None) -> None:
         self.data_dir = _resolve_data_dir(data_dir)
@@ -51,8 +91,13 @@ class VaultStorage:
         self.path = self.data_dir / VAULT_FILENAME
         self.bin_path = self.data_dir / BIN_FILENAME
         self._lock = Lock()
-        self._migrate_inline_trash()
-        self._repair_homekit_pairing()
+        try:
+            self._migrate_inline_trash()
+            self._repair_homekit_pairing()
+        except VaultUnreadableError as exc:
+            # Start anyway: the UI then shows a coded error and can still replace-import a
+            # backup, instead of the add-on dying at import with a bare traceback.
+            _LOGGER.error("%s The vault stays unavailable until then.", exc)
 
     def load(self) -> Vault:
         with self._lock:
@@ -60,8 +105,7 @@ class VaultStorage:
                 vault = Vault()
                 self._write_unlocked(vault)
                 return vault
-            raw = json.loads(self.path.read_text(encoding="utf-8"))
-            return Vault.model_validate(raw)
+            return _read_model(self.path, Vault)
 
     def save(self, vault: Vault) -> None:
         with self._lock:
@@ -78,21 +122,17 @@ class VaultStorage:
     def _load_bin_unlocked(self) -> TrashBin:
         if not self.bin_path.exists():
             return TrashBin()
-        raw = json.loads(self.bin_path.read_text(encoding="utf-8"))
-        return TrashBin.model_validate(raw)
+        return _read_model(self.bin_path, TrashBin)
 
     def _write_bin_unlocked(self, bin_data: TrashBin) -> None:
-        tmp = self.bin_path.with_suffix(".tmp")
-        tmp.write_text(bin_data.model_dump_json(indent=2), encoding="utf-8")
-        tmp.replace(self.bin_path)
+        atomic_write_text(self.bin_path, bin_data.model_dump_json(indent=2))
 
     def _migrate_inline_trash(self) -> None:
         """One-time move of pre-v1.0.16 inline-trashed items into the bin file."""
         if not self.path.exists():
             return
         with self._lock:
-            raw = json.loads(self.path.read_text(encoding="utf-8"))
-            vault = Vault.model_validate(raw)
+            vault = _read_model(self.path, Vault)
             trashed_cats = [c for c in vault.categories if c.deleted_at]
             trashed_codes = [c for c in vault.codes if c.deleted_at]
             if not trashed_cats and not trashed_codes:
@@ -111,7 +151,7 @@ class VaultStorage:
         """Fix HomeKit pairing codes saved by the pre-3.0 31-bit-mask decoder (vault + bin)."""
         with self._lock:
             if self.path.exists():
-                vault = Vault.model_validate(json.loads(self.path.read_text(encoding="utf-8")))
+                vault = _read_model(self.path, Vault)
                 if _repair_homekit_codes(vault.codes):
                     self._write_unlocked(vault)
             if self.bin_path.exists():
@@ -127,28 +167,29 @@ class VaultStorage:
         return vault.model_dump_json(indent=2)
 
     def import_json(self, payload: str, *, merge: bool = False) -> Vault:
+        from vault_merge import merge_vaults
+
         incoming = Vault.model_validate(json.loads(payload))
         # Exports and backups from 2.x (e.g. moving over from another install) carry the
         # same legacy HomeKit codes that _repair_homekit_pairing fixes on disk at startup.
         _repair_homekit_codes(incoming.codes)
         with self._lock:
             if merge and self.path.exists():
-                current = Vault.model_validate(
-                    json.loads(self.path.read_text(encoding="utf-8"))
-                )
-                # Skip incoming items whose id already exists locally — importing the
-                # same export twice (or re-importing after a partial sync) must not
-                # create a second record sharing an id with an existing one.
-                existing_cat_ids = {c.id for c in current.categories}
-                existing_code_ids = {c.id for c in current.codes}
-                current.categories.extend(
-                    c for c in incoming.categories if c.id not in existing_cat_ids
-                )
-                current.codes.extend(
-                    c for c in incoming.codes if c.id not in existing_code_ids
-                )
-                self._write_unlocked(current)
-                return current
+                current = _read_model(self.path, Vault)
+                # Something in the Trash stays there: the export still carrying it must not
+                # put a second, live copy with the same id next to the trashed one (it can
+                # be restored from the Trash instead).
+                trash = self._load_bin_unlocked()
+                trashed_cats = {c.id for c in trash.categories}
+                trashed_codes = {c.id for c in trash.codes}
+                theirs = incoming.model_dump(mode="json")
+                theirs["categories"] = [c for c in theirs["categories"] if c["id"] not in trashed_cats]
+                theirs["codes"] = [c for c in theirs["codes"] if c["id"] not in trashed_codes]
+                # Per id the newest updated_at wins (local on a tie), and purged ids
+                # (meta.deletions tombstones) stay deleted instead of coming back.
+                merged = Vault.model_validate(merge_vaults(current.model_dump(mode="json"), theirs))
+                self._write_unlocked(merged)
+                return merged
             self._write_unlocked(incoming)
             return incoming
 
@@ -179,9 +220,4 @@ class VaultStorage:
                 pass
 
     def _write_unlocked(self, vault: Vault) -> None:
-        tmp = self.path.with_suffix(".tmp")
-        tmp.write_text(
-            vault.model_dump_json(indent=2),
-            encoding="utf-8",
-        )
-        tmp.replace(self.path)
+        atomic_write_text(self.path, vault.model_dump_json(indent=2))

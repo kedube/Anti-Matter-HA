@@ -26,6 +26,8 @@ MANUAL_FONT_SIZE = 26 * SCALE
 NAME_H = 26 * SCALE
 MANUAL_H = 42 * SCALE
 TAIL = 12 * SCALE
+# More characters than the label could ever show, even in the narrow bitmap fallback font.
+MAX_NAME_CHARS = 120
 
 
 def _logo_height_at(width: int) -> int:
@@ -72,7 +74,11 @@ def label_png_bytes(
     if name:
         font = _mono_font(NAME_FONT_SIZE)
         # Long names would overflow the label width — clip rather than shrink the font.
-        trimmed = False
+        # The loop below re-measures the whole string per removed character (quadratic),
+        # so never feed it more than could fit: an 8,000-char name took ~47 s before.
+        full_len = len(name)
+        name = name[:MAX_NAME_CHARS]
+        trimmed = len(name) < full_len
         while font and len(name) > 1 and draw.textbbox((0, 0), name, font=font)[2] > w - 2 * PAD_X:
             name = name[:-1]
             trimmed = True

@@ -8,7 +8,7 @@ from matter_setup_payload import normalize_scanned_or_entered
 
 
 def manual_digits(value: str) -> str:
-    d = re.sub(r"\D", "", value or "")
+    d = re.sub(r"[^0-9]", "", value or "")  # ASCII only, like the browser parser
     return d if len(d) == 11 else ""
 
 
@@ -33,8 +33,8 @@ def display_manual(manual_code: str) -> str:
 def qr_encode_payload(qr_payload: str, manual_code: str = "") -> str | None:
     qr = (qr_payload or "").strip()
     if qr and qr.upper().startswith("MT:"):
-        idx = qr.upper().find("MT:")
-        return qr[idx:] if idx >= 0 else qr
+        # Base38 is upper-case only; older vaults may hold a hand-typed lower-case copy.
+        return qr.upper()
     return None
 
 

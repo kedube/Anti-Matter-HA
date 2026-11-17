@@ -165,7 +165,8 @@ Use `↑` `↓` (or `K` `J`) for the previous or next code, `D` to jump to the d
 **Move to Trash** and **Edit** are at the bottom.
 
 **Download label** saves a PNG of the label to your device. It also copies it to Home Assistant's media folder as
-`anti_matter/antimatter-<name>.png`, so you can find it in Media or on the Samba `media` share.
+`anti_matter/antimatter-<name>-<id>.png` (`<id>` is the first 8 characters of the code's id, so two codes
+with similar names never overwrite each other's file), so you can find it in Media or on the Samba `media` share.
 
 ---
 

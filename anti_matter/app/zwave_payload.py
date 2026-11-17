@@ -15,7 +15,9 @@ TLV_SUPPORTED_PROTOCOLS = 4
 
 
 def _digits_only(value: str) -> str:
-    return re.sub(r"\D", "", value or "")
+    # [^0-9], not \D: \d also matches non-ASCII digits (e.g. Arabic-Indic), which then
+    # crash checksum_valid's .encode("ascii"). The browser parser drops them the same way.
+    return re.sub(r"[^0-9]", "", value or "")
 
 
 def format_dsk(dsk_digits: str) -> str:
@@ -136,7 +138,9 @@ def extract_qr_string(text: str) -> str:
     if not d.startswith("90"):
         return ""
     best = ""
-    for end in range(90, min(len(d), 200) + 1):
+    # From the 52-digit minimum (no TLVs), so a short QR followed by other digits in the
+    # same text (e.g. "… PIN 12345") is still found.
+    for end in range(52, min(len(d), 200) + 1):
         trial = d[:end]
         if parse_qr_digits(trial):
             best = trial

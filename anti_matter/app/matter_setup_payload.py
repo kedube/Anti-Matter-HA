@@ -56,6 +56,10 @@ def _base38_decode(qrcode: str) -> bytes:
         for j in range(i + chars_in_chunk - 1, i - 1, -1):
             value = value * _BASE38_RADIX + _BASE38_CODES.index(qrcode[j])
         bytes_in_chunk = _BASE38_CHARS_NEEDED.index(chars_in_chunk) + 1
+        if value >> (8 * bytes_in_chunk):
+            # 5 base38 chars reach 38^5 > 2^24: reject instead of silently dropping bits
+            # (the connectedhomeip reference decoder does the same).
+            raise ValueError("Base38 chunk out of range")
         for _ in range(bytes_in_chunk):
             decoded.append(value & 0xFF)
             value >>= 8
@@ -88,6 +92,12 @@ _VERHOEFF_P = (
     (7, 0, 4, 6, 9, 1, 3, 2, 5, 8),
 )
 _VERHOEFF_INV = (0, 4, 3, 2, 1, 5, 6, 7, 8, 9)
+
+
+def ascii_digits(value: str) -> str:
+    """ASCII 0-9 only. str.isdigit() also accepts e.g. Arabic-Indic or superscript digits,
+    which int() / .encode("ascii") then choke on (and the browser parser drops them)."""
+    return "".join(c for c in (value or "") if "0" <= c <= "9")
 
 
 def _verhoeff_check_digit(payload: str) -> str:
@@ -182,8 +192,9 @@ def parse_qr_payload(payload: str) -> ParsedSetupPayload:
         raise ValueError("Not an MT: payload")
     # "MT:<p1>*<p2>..." bundles several devices; parse the first. Bytes past the
     # fixed 11-byte (88-bit) base payload are optional TLV data (serial number etc.),
-    # so only the base bytes are bit-reversed and read.
-    encoded = raw[3:].split("*", 1)[0]
+    # so only the base bytes are bit-reversed and read. Base38 is upper-case only, so a
+    # hand-typed lower-case payload is the same code.
+    encoded = raw[3:].split("*", 1)[0].upper()
     data = _base38_decode(encoded)
     if len(data) < 11:
         raise ValueError("MT: payload too short")
@@ -203,7 +214,7 @@ def parse_qr_payload(payload: str) -> ParsedSetupPayload:
 
 
 def parse_manual_payload(payload: str) -> ParsedSetupPayload:
-    digits = "".join(c for c in payload if c.isdigit())
+    digits = ascii_digits(payload)
     if len(digits) not in (11, 21):
         raise ValueError("Manual code must be 11 or 21 digits")
     if int(digits[0]) > 7:
@@ -212,6 +223,12 @@ def parse_manual_payload(payload: str) -> ParsedSetupPayload:
         raise ValueError("Manual code check digit mismatch")
 
     is_long = int(digits[0]) & (1 << 2) != 0
+    # Each decimal group packs into a fixed bit width (16 / 13 / 16 / 16). A larger value
+    # would overflow into the next field and decode to a different, wrong code.
+    if int(digits[1:6]) > 0xFFFF or int(digits[6:10]) > 0x1FFF:
+        raise ValueError("Manual code group out of range")
+    if is_long and len(digits) == 21 and (int(digits[10:15]) > 0xFFFF or int(digits[15:20]) > 0xFFFF):
+        raise ValueError("Manual code vendor/product out of range")
     bit_parts = [
         (4, int(digits[0])),
         (16, int(digits[1:6])),
@@ -288,7 +305,7 @@ def generate_manual_code(parsed: ParsedSetupPayload) -> str:
 
 
 def format_manual_display(manual: str) -> str:
-    digits = "".join(c for c in manual if c.isdigit())
+    digits = ascii_digits(manual)
     if len(digits) == 11:
         return f"{digits[0:4]}-{digits[4:7]}-{digits[7:11]}"
     if len(digits) == 21:
@@ -306,15 +323,19 @@ def normalize_scanned_or_entered(
     """Parse and canonicalize Matter fields for storage and scannable QR cards."""
     manual_in = (manual_code or "").strip()
     qr_in = (qr_payload or "").strip()
+    if qr_in.upper().startswith("MT:"):
+        # Base38 has no lower-case letters: a typed "mt:y.k90…" is that same code, but
+        # stored as typed it would encode a QR that no commissioner can read.
+        qr_in = qr_in.upper()
 
     parsed: ParsedSetupPayload | None = None
-    if qr_in.upper().startswith("MT:"):
+    if qr_in.startswith("MT:"):
         try:
             parsed = parse_qr_payload(qr_in)
         except ValueError:
             parsed = None
     if parsed is None:
-        digits = "".join(c for c in manual_in if c.isdigit())
+        digits = ascii_digits(manual_in)
         if len(digits) in (11, 21):
             try:
                 parsed = parse_manual_payload(digits)
@@ -328,7 +349,7 @@ def normalize_scanned_or_entered(
             qr = qr[idx:]
         else:
             qr = ""
-        digits = "".join(c for c in manual_in if c.isdigit())
+        digits = ascii_digits(manual_in)
         manual = format_manual_display(digits) if len(digits) == 11 else manual_in
         return {"manual_code": manual, "qr_payload": qr}
 

@@ -141,7 +141,9 @@ def _prune_deletions(deletions: dict, vault: dict) -> dict:
 
 
 def _pick_newer(a: dict, b: dict) -> dict:
-    if _ts_compare(a.get("updated_at") or a.get("created_at"), b.get("updated_at") or b.get("created_at")) <= 0:
+    """``b`` only when it is strictly newer. On a tie (or no timestamps at all, as for
+    categories) the local copy ``a`` stays, so a merge never reverts a local edit."""
+    if _ts_compare(a.get("updated_at") or a.get("created_at"), b.get("updated_at") or b.get("created_at")) < 0:
         return b
     return a
 

@@ -35,6 +35,11 @@ def _media_files(app_module) -> list[str]:
     return sorted(p.name for p in d.iterdir()) if d.exists() else []
 
 
+def _name(stem: str, code_id: str, ext: str) -> str:
+    """Media filename: sanitized name + the first 8 chars of the code id (no collisions)."""
+    return f"antimatter-{stem}-{code_id.replace('-', '')[:8]}.{ext}"
+
+
 def _post(client, code_id, content: bytes | None = None, ctype: str | None = None):
     headers = {"Content-Type": ctype} if ctype else {}
     return client.post(f"/api/codes/{code_id}/save-to-media", content=content, headers=headers)
@@ -47,16 +52,18 @@ def _post(client, code_id, content: bytes | None = None, ctype: str | None = Non
 def test_no_body_renders_label_png(client, app_module, code_id, ctype):
     resp = _post(client, code_id, None, ctype)
     assert resp.status_code == 200
-    assert resp.json() == {"ok": True, "path": "/media/anti_matter/antimatter-Lamp_hall.png"}
-    assert (app_module.MEDIA_DIR / "antimatter-Lamp_hall.png").read_bytes().startswith(PNG_MAGIC)
+    name = _name("Lamp_hall", code_id, "png")
+    assert resp.json() == {"ok": True, "path": f"/media/anti_matter/{name}"}
+    assert (app_module.MEDIA_DIR / name).read_bytes().startswith(PNG_MAGIC)
 
 
 def test_no_body_renders_homekit_card_svg(client, app_module):
     cid = client.post("/api/codes", json={"name": "Lock", "code_type": "homekit",
                                           "qr_payload": HK_URI}).json()["id"]
     resp = _post(client, cid)
-    assert resp.json()["path"] == "/media/anti_matter/antimatter-Lock.svg"
-    svg = (app_module.MEDIA_DIR / "antimatter-Lock.svg").read_text(encoding="utf-8")
+    name = _name("Lock", cid, "svg")
+    assert resp.json()["path"] == f"/media/anti_matter/{name}"
+    svg = (app_module.MEDIA_DIR / name).read_text(encoding="utf-8")
     assert "<svg" in svg
     # The server's own card (inline data: logo, #fragment refs) passes the upload filter.
     again = _post(client, cid, svg.encode("utf-8"), "image/svg+xml")
@@ -70,16 +77,18 @@ def test_png_upload_saved_verbatim(client, app_module, code_id):
     png = _png_bytes()
     resp = _post(client, code_id, png, "image/png")
     assert resp.status_code == 200
-    assert resp.json()["path"] == "/media/anti_matter/antimatter-Lamp_hall.png"
-    assert (app_module.MEDIA_DIR / "antimatter-Lamp_hall.png").read_bytes() == png
+    name = _name("Lamp_hall", code_id, "png")
+    assert resp.json()["path"] == f"/media/anti_matter/{name}"
+    assert (app_module.MEDIA_DIR / name).read_bytes() == png
 
 
 @pytest.mark.parametrize("svg", [GOOD_SVG, '<?xml version="1.0"?>\n' + GOOD_SVG, "﻿" + GOOD_SVG])
 def test_svg_upload_saved_verbatim(client, app_module, code_id, svg):
     resp = _post(client, code_id, svg.encode("utf-8"), "image/svg+xml; charset=utf-8")
     assert resp.status_code == 200, resp.text
-    assert resp.json()["path"] == "/media/anti_matter/antimatter-Lamp_hall.svg"
-    assert (app_module.MEDIA_DIR / "antimatter-Lamp_hall.svg").read_bytes() == svg.encode("utf-8")
+    name = _name("Lamp_hall", code_id, "svg")
+    assert resp.json()["path"] == f"/media/anti_matter/{name}"
+    assert (app_module.MEDIA_DIR / name).read_bytes() == svg.encode("utf-8")
 
 
 def test_qr_svg_output_is_an_accepted_upload(client, code_id):
@@ -101,6 +110,18 @@ def test_qr_svg_output_is_an_accepted_upload(client, code_id):
     '<svg xmlns="http://www.w3.org/2000/svg"><foreignObject><div/></foreignObject></svg>',
     '<svg xmlns="http://www.w3.org/2000/svg"><set attributeName="href" to="#a"/></svg>',
     '<?xml version="1.0"?><!DOCTYPE svg [<!ENTITY x "y">]><svg/>',
+    # What only an XML parser sees: namespace prefixes and decoded character references.
+    '<svg xmlns="http://www.w3.org/2000/svg" xmlns:s="http://www.w3.org/2000/svg">'
+    "<s:script>alert(1)</s:script></svg>",
+    '<svg xmlns="http://www.w3.org/2000/svg" xmlns:h="http://www.w3.org/1999/xhtml">'
+    "<h:script>alert(1)</h:script></svg>",
+    '<svg xmlns="http://www.w3.org/2000/svg" xmlns:s="http://www.w3.org/2000/svg">'
+    "<s:foreignObject><div/></s:foreignObject></svg>",
+    '<svg xmlns="http://www.w3.org/2000/svg"><a><set attributeName="h&#x72;ef" '
+    'to="jav&#x61;script:alert(1)"/><text>x</text></a></svg>',
+    '<svg xmlns="http://www.w3.org/2000/svg"><a href="jav&#x61;script:alert(1)"><text>x</text></a></svg>',
+    '<svg xmlns="http://www.w3.org/2000/svg"><style>rect{fill:u&#x72;l(http://evil/x)}</style></svg>',
+    '<svg xmlns="http://www.w3.org/2000/svg" xml:base="https://evil.example/"><use href="#a"/></svg>',
     "<html><body>not an svg</body></html>",
     "hello",
 ])

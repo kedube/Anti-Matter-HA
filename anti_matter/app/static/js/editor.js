@@ -414,7 +414,7 @@
     R.nameHint = hintEl("ed-name-h");
     R.nameAside = h("span", { class: "aside autofill", hidden: !m.nameFrom }, icon("sparkles"), h("span", null, m.nameFrom === "db" ? t("editor.from_db") : t("editor.from_dcl")));
     R.name = input("ed-name", m.name, {
-      required: true, describedby: "ed-name-h", placeholder: t("editor.name_placeholder"),
+      required: true, describedby: "ed-name-h", placeholder: t("editor.name_placeholder"), maxlength: 200,
       onInput: function (v) {
         m.name = v;
         m.touched.name = true;

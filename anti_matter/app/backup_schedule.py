@@ -8,11 +8,15 @@ Frequency is one of: hourly | daily | weekly | monthly.
 - daily: runs once per day, at the configured hour:minute.
 - weekly: runs once per week, on the configured weekday, at hour:minute.
 - monthly: runs once per month, on the configured day_of_month, at hour:minute.
+
+A period whose scheduled time was missed (add-on not running then) catches up at the
+next check in that same period.
 """
 
 from __future__ import annotations
 
 import json
+from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
@@ -41,11 +45,14 @@ def load_settings(data_dir: Path) -> dict[str, Any]:
     if p.exists():
         try:
             data = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            data = None
+        # Valid JSON that is not an object (null, [], "x") counts as unreadable too: this
+        # runs at add-on startup, where an AttributeError would stop the add-on.
+        if isinstance(data, dict):
             out = dict(DEFAULTS)
             out.update({k: v for k, v in data.items() if k in DEFAULTS})
             return out
-        except (OSError, ValueError):
-            pass
     out = dict(DEFAULTS)
     try:
         from options import backup_keep_count
@@ -67,9 +74,9 @@ def save_settings(data_dir: Path, updates: dict[str, Any]) -> dict[str, Any]:
     merged["day_of_month"] = max(1, min(28, int(merged.get("day_of_month") or 1)))
     merged["keep_count"] = max(1, min(100, int(merged.get("keep_count") or 10)))
     merged["enabled"] = bool(merged.get("enabled"))
-    _settings_path(data_dir).write_text(
-        json.dumps(merged, indent=2), encoding="utf-8"
-    )
+    from storage import atomic_write_text
+
+    atomic_write_text(_settings_path(data_dir), json.dumps(merged, indent=2))
     return merged
 
 
@@ -89,7 +96,35 @@ def mark_ran(data_dir: Path, key: str) -> None:
     save_settings(data_dir, {"last_run_key": key})
 
 
+def _setting_int(settings: dict[str, Any], key: str, lo: int, hi: int) -> int:
+    """Clamped int setting; a hand-edited file may hold strings, nulls or out-of-range values."""
+    try:
+        value = int(settings.get(key, DEFAULTS[key]))
+    except (TypeError, ValueError):
+        value = int(DEFAULTS[key])
+    return max(lo, min(hi, value))
+
+
+def scheduled_time(settings: dict[str, Any], frequency: str, now):
+    """When the backup of the period that ``now`` falls in is scheduled (naive local time)."""
+    minute = _setting_int(settings, "minute", 0, 59)
+    if frequency == "hourly":
+        return now.replace(minute=minute, second=0, microsecond=0)
+    target = now.replace(hour=_setting_int(settings, "hour", 0, 23), minute=minute, second=0, microsecond=0)
+    if frequency == "weekly":
+        return target - timedelta(days=now.weekday() - _setting_int(settings, "weekday", 0, 6))
+    if frequency == "monthly":
+        return target.replace(day=_setting_int(settings, "day_of_month", 1, 28))
+    return target
+
+
 def is_due(settings: dict[str, Any], now) -> bool:
+    """True once the current period's scheduled time has passed and it has not run yet.
+
+    Catch-up, not exact-minute: a restart, an HA update or a stalled loop over the
+    scheduled minute (or a DST jump over it) still backs up later in the same period,
+    instead of silently skipping it. ``last_run_key`` keeps it to once per period.
+    """
     if not settings.get("enabled"):
         return False
     freq = settings.get("frequency", "daily")
@@ -97,14 +132,4 @@ def is_due(settings: dict[str, Any], now) -> bool:
         freq = "daily"
     if settings.get("last_run_key") == period_key(freq, now):
         return False
-    if freq == "hourly":
-        return now.minute == int(settings.get("minute", 0))
-    if now.hour != int(settings.get("hour", 3)) or now.minute != int(
-        settings.get("minute", 0)
-    ):
-        return False
-    if freq == "weekly":
-        return now.weekday() == int(settings.get("weekday", 0))
-    if freq == "monthly":
-        return now.day == int(settings.get("day_of_month", 1))
-    return True  # daily
+    return now >= scheduled_time(settings, freq, now)

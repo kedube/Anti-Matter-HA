@@ -43,7 +43,7 @@ DEFAULT_HOMEKIT_FLAG = 2  # IP
 
 
 def pairing_digits(value: str) -> str:
-    digits = re.sub(r"\D", "", value or "")
+    digits = re.sub(r"[^0-9]", "", value or "")  # ASCII only, like the browser parser
     return digits if len(digits) == 8 else ""
 
 

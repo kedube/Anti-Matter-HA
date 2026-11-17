@@ -264,7 +264,7 @@ Everything lives in the add-on's config folder, `/config` inside the add-on. Ove
 - **Home Assistant backups** include this folder whenever the Anti-Matter add-on is part of the backup.
 - **Backups dialog:** switch on automatic backups (hourly, daily, weekly or monthly), choose the time, and choose how many copies to keep (1–100). Older copies are pruned. **Back up now** makes one immediately. The schedule uses the add-on's local time; file names use UTC.
 - **Export** downloads `anti-matter-export.json`, which holds every code and category. **Import** shows what a file contains, then offers **Merge** (add the new codes, keep yours) or **Replace** (a safety backup is made first). Files that are not Anti-Matter exports are refused.
-- **Download label** saves a PNG to your device and also copies it to Home Assistant's media folder as `media/anti_matter/antimatter-<name>.png`.
+- **Download label** saves a PNG to your device and also copies it to Home Assistant's media folder as `media/anti_matter/antimatter-<name>-<id>.png` (the short code id keeps similarly named codes apart).
 - Backups and exports contain the vault only. The Trash is not included.
 
 ## Privacy & security

@@ -85,6 +85,8 @@
         value = value * BASE38_RADIX + code;
       }
       const bytesInChunk = BASE38_CHARS_NEEDED.indexOf(charsInChunk) + 1;
+      // 5 base38 chars reach 38^5 > 2^24: reject instead of silently dropping bits.
+      if (value >= 2 ** (8 * bytesInChunk)) throw new Error("Base38 chunk out of range");
       for (let k = 0; k < bytesInChunk; k++) {
         decoded.push(value & 0xff);
         value >>= 8;
@@ -143,7 +145,7 @@
     if (!raw.toUpperCase().startsWith("MT:")) throw new Error("Not MT:");
     // "MT:<p1>*<p2>..." bundles several devices; parse the first. Bytes past the
     // fixed 11-byte base payload are optional TLV data, so only those are reversed.
-    const data = base38Decode(raw.slice(3).split("*")[0]);
+    const data = base38Decode(raw.slice(3).split("*")[0].toUpperCase());
     if (data.length < 11) throw new Error("MT: payload too short");
     const decoded = data.slice(0, 11).reverse();
     const f = readFields(decoded, QR_SPEC);
@@ -166,6 +168,15 @@
       throw new Error("check digit");
     }
     const isLong = (parseInt(digits[0], 10) & (1 << 2)) !== 0;
+    // Each decimal group packs into a fixed bit width (16 / 13 / 16 / 16). A larger value
+    // would overflow into the next field and decode to a different, wrong code.
+    if (parseInt(digits.slice(1, 6), 10) > 0xffff || parseInt(digits.slice(6, 10), 10) > 0x1fff) {
+      throw new Error("group out of range");
+    }
+    if (isLong && digits.length === 21 &&
+        (parseInt(digits.slice(10, 15), 10) > 0xffff || parseInt(digits.slice(15, 20), 10) > 0xffff)) {
+      throw new Error("vendor/product out of range");
+    }
     const bits =
       parseInt(digits[0], 10).toString(2).padStart(4, "0") +
       parseInt(digits.slice(1, 6), 10).toString(2).padStart(16, "0") +
@@ -251,6 +262,9 @@
   function normalizeScannedOrEntered(manualCode = "", qrPayload = "") {
     const manualIn = String(manualCode || "").trim();
     let qrIn = String(qrPayload || "").trim();
+    // Base38 has no lower-case letters: a typed "mt:y.k90…" is that same code, but kept
+    // as typed it would encode a QR that no commissioner can read.
+    if (qrIn.toUpperCase().startsWith("MT:")) qrIn = qrIn.toUpperCase();
     let parsed = null;
 
     if (qrIn.toUpperCase().startsWith("MT:")) {
@@ -292,7 +306,7 @@
       try {
         qrOut = generateQrPayload(parsed);
       } catch {
-        qrOut = qrPayload && String(qrPayload).toUpperCase().startsWith("MT:") ? qrPayload.trim() : "";
+        qrOut = qrIn.startsWith("MT:") ? qrIn : "";
       }
     }
     return { manual_code: formatManualDisplay(manualRaw), qr_payload: qrOut };
