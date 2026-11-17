@@ -3,6 +3,11 @@
 Detailed per-commit history is in [git log](https://github.com/Cl3tus/Anti-Matter-HA/commits/main).
 This file summarizes the notable changes by theme.
 
+## 3.1.0
+
+- Bug fixes and code refactoring
+- Improve CI automation
+
 ## 3.0.2 — tight photos, look-alike devices and safer Replace
 
 - **Photos of tightly cropped labels now decode** ([#6](https://github.com/Cl3tus/Anti-Matter-HA/issues/6)). A QR
