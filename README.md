@@ -180,12 +180,12 @@ Most of these translations are new in 3.0, and corrections from native speakers 
 
 ## Install
 
-[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FCl3tus%2FHA-Addons)
+[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https://github.com/kedube/Anti-Matter-HA)
 
 Or add the repository by hand:
 
 1. In Home Assistant, go to **Settings → Apps → App store**, open the **⋮** menu (top right) and choose **Repositories**.
-2. Add `https://github.com/Cl3tus/HA-Addons` and close the dialog.
+2. Add `https://github.com/kedube/Anti-Matter-HA` and close the dialog.
 3. Find **Anti-Matter** in the store, select **Install**, then **Start**.
 4. Open **Anti-Matter** from the sidebar. It runs through Home Assistant ingress, so no ports are opened.
 
@@ -260,7 +260,7 @@ Everything lives in the add-on's config folder, `/config` inside the add-on. Ove
     └── anti_matter_YYYYMMDD_HHMMSS.json   one file per backup (UTC time)
 ```
 
-- `<hash>` is set by Home Assistant from the repository you installed from. For `Cl3tus/HA-Addons` it is `74e2a2e6`, so look for the folder ending in `_anti_matter`. Older setups name the share `addon_configs`.
+- `<hash>` is set by Home Assistant from the repository you installed from. For `Anti-Matter-HA` it is `c32b158b`, so look for the folder ending in `_anti_matter`. Older setups name the share `addon_configs`.
 - **Home Assistant backups** include this folder whenever the Anti-Matter add-on is part of the backup.
 - **Backups dialog:** switch on automatic backups (hourly, daily, weekly or monthly), choose the time, and choose how many copies to keep (1–100). Older copies are pruned. **Back up now** makes one immediately. The schedule uses the add-on's local time; file names use UTC.
 - **Export** downloads `anti-matter-export.json`, which holds every code and category. **Import** shows what a file contains, then offers **Merge** (add the new codes, keep yours) or **Replace** (a safety backup is made first). Files that are not Anti-Matter exports are refused.
