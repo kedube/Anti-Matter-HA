@@ -28,7 +28,7 @@ Home Assistant and the Matter DCL are mocked, so a run needs neither Home Assist
 
 Used by the [project README](../../README.md). `hero.png`, `scanner-result.png` and `detail.png` also appear on the
 add-on's store page ([`anti_matter/README.md`](../../anti_matter/README.md)) through absolute
-`raw.githubusercontent.com/Cl3tus/Anti-Matter-HA/main/…` URLs.
+`raw.githubusercontent.com/kedube/Anti-Matter-HA/main/…` URLs.
 
 | File | Size (px) | What it shows |
 | --- | --- | --- |

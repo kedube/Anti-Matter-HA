@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Cl3tus/Anti-Matter-HA/main/anti_matter/banner.png" alt="Anti-Matter: offline vault and scanner for smart-home pairing codes" width="100%">
+  <img src="https://raw.githubusercontent.com/kedube/Anti-Matter-HA/main/anti_matter/banner.png" alt="Anti-Matter: offline vault and scanner for smart-home pairing codes" width="100%">
 </p>
 
 # Anti-Matter
 
-[![Version](https://img.shields.io/badge/version-3.1.0-blue)](https://github.com/Cl3tus/Anti-Matter-HA/blob/main/anti_matter/CHANGELOG.md)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/Cl3tus/Anti-Matter-HA/blob/main/LICENSE)
+[![Version](https://img.shields.io/badge/version-3.1.0-blue)](https://github.com/kedube/Anti-Matter-HA/blob/main/anti_matter/CHANGELOG.md)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/kedube/Anti-Matter-HA/blob/main/LICENSE)
 ![Supports aarch64](https://img.shields.io/badge/aarch64-yes-green)
 ![Supports amd64](https://img.shields.io/badge/amd64-yes-green)
 ![24 languages](https://img.shields.io/badge/languages-24-7B61FF)
@@ -14,7 +14,7 @@ Keep every **Matter**, **HomeKit**, **Z-Wave**, **Zigbee** and **Tuya** pairing 
 inside Home Assistant. Scan a label once, and you can show, print or re-pair from it whenever you need to. There is
 no account and no cloud.
 
-![Anti-Matter vault in the dark and light theme, with a phone scanning a Matter label](https://raw.githubusercontent.com/Cl3tus/Anti-Matter-HA/main/docs/screenshots/hero.png)
+![Anti-Matter vault in the dark and light theme, with a phone scanning a Matter label](https://raw.githubusercontent.com/kedube/Anti-Matter-HA/main/docs/screenshots/hero.png)
 
 ## Features
 
@@ -30,7 +30,7 @@ no account and no cloud.
 - **Trash, backups, export and import.** Backups can run hourly, daily, weekly or monthly, and they are also included in Home Assistant backups.
 - **24 languages,** including Hebrew and Arabic right to left, plus light, dark and Invert themes that follow Home Assistant.
 
-![Batch scanning: result sheet and the session tray](https://raw.githubusercontent.com/Cl3tus/Anti-Matter-HA/main/docs/screenshots/scanner-result.png)
+![Batch scanning: result sheet and the session tray](https://raw.githubusercontent.com/kedube/Anti-Matter-HA/main/docs/screenshots/scanner-result.png)
 
 ## Good to know
 
@@ -38,7 +38,7 @@ no account and no cloud.
 - **Your data stays local.** Everything is stored in plain JSON in the add-on's config folder (`\\<HA-IP>\app_configs\<hash>_anti_matter\` over Samba). The only outbound request sends a Matter code's vendor ID and product ID to the official CSA registry, to look up the names.
 - **Every Home Assistant user can open the panel.** That includes non-admins, so they can read the codes too.
 
-![Details of a Matter code: linked Home Assistant device and decoded payload](https://raw.githubusercontent.com/Cl3tus/Anti-Matter-HA/main/docs/screenshots/detail.png)
+![Details of a Matter code: linked Home Assistant device and decoded payload](https://raw.githubusercontent.com/kedube/Anti-Matter-HA/main/docs/screenshots/detail.png)
 
 ## Configuration
 
@@ -51,8 +51,8 @@ no account and no cloud.
 A language or theme picked inside the app is remembered by that browser and takes precedence over these options.
 
 The **Documentation** tab has the full manual. The
-[project page](https://github.com/Cl3tus/Anti-Matter-HA) has more screenshots, and the
-[changelog](https://github.com/Cl3tus/Anti-Matter-HA/blob/main/anti_matter/CHANGELOG.md) lists what changed in 3.0.
+[project page](https://github.com/kedube/Anti-Matter-HA) has more screenshots, and the
+[changelog](https://github.com/kedube/Anti-Matter-HA/blob/main/anti_matter/CHANGELOG.md) lists what changed in 3.0.
 
 ## Credits
 

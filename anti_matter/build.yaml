@@ -4,5 +4,5 @@ build_from:
 labels:
   org.opencontainers.image.title: "Anti-Matter"
   org.opencontainers.image.description: "Local vault and offline scanner for Matter, HomeKit, Z-Wave, Zigbee and Tuya pairing codes in Home Assistant"
-  org.opencontainers.image.source: "https://github.com/Cl3tus/Anti-Matter-HA"
+  org.opencontainers.image.source: "https://github.com/kedube/Anti-Matter-HA"
   org.opencontainers.image.licenses: "MIT"

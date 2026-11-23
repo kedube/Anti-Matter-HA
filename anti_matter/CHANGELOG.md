@@ -1,6 +1,6 @@
 # Changelog
 
-Detailed per-commit history is in [git log](https://github.com/Cl3tus/Anti-Matter-HA/commits/main).
+Detailed per-commit history is in [git log](https://github.com/kedube/Anti-Matter-HA/commits/main).
 This file summarizes the notable changes by theme.
 
 ## 3.1.0

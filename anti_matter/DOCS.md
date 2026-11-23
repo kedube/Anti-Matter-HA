@@ -4,7 +4,7 @@ Anti-Matter is a private vault for your smart-home **pairing codes**: Matter, Ho
 anything else. It scans and decodes each code, stores it on your Home Assistant, and shows a clean, scannable label
 whenever you need to pair a device again.
 
-Screenshots and the project page: <https://github.com/Cl3tus/Anti-Matter-HA>
+Screenshots and the project page: <https://github.com/kedube/Anti-Matter-HA>
 
 ---
 
