@@ -3,6 +3,14 @@
 Detailed per-commit history is in [git log](https://github.com/kedube/Anti-Matter-HA/commits/main).
 This file summarizes the notable changes by theme.
 
+## 3.1.1
+
+- Update README.md
+- Update documentation repo pointers
+- Several fixes
+- Update release CI workflow
+- Update CI release workflow
+
 ## 3.1.0
 
 - Bug fixes and code refactoring
