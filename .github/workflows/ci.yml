@@ -6,6 +6,13 @@ on:
   pull_request:
   workflow_dispatch:
   workflow_call: # reused by release.yml before anything is published
+    inputs:
+      ref:
+        description: Commit to test (release.yml passes the release commit, which may be
+          the bump it just pushed); empty = the commit that triggered the run
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -22,6 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
       - uses: frenck/action-addon-linter@v2
         with:
           path: ./anti_matter
@@ -31,6 +40,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -49,6 +60,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12" # matches the add-on base image
@@ -63,6 +76,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -96,6 +111,8 @@ jobs:
             platform: linux/arm64
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
       - name: Base image from build.yaml
         id: base
         run: echo "from=$(yq '.build_from.${{ matrix.arch }}' anti_matter/build.yaml)" >> "$GITHUB_OUTPUT"

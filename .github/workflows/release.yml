@@ -1,28 +1,139 @@
 name: Release
 
-# Either run the "Bump version" workflow (bump.yml: pick major / minor / patch; it commits
-# the bump and starts this workflow), or bump locally (python3 tools/ci/version.py bump
-# minor|major|patch|X.Y.Z), fill in the CHANGELOG entry and push to main. When
-# anti_matter/config.yaml carries a version that has no tag yet, this runs the full CI,
+# Releases the version in anti_matter/config.yaml when it has no tag yet: runs the full CI,
 # tags vX.Y.Z, publishes a GitHub release with that CHANGELOG section, and mirrors
 # anti_matter/ into the add-on store repository (HA-Addons).
+#
+# From GitHub: Actions → Release → Run workflow, on main, and pick the bump:
+#   major / minor / patch  bump every copy of the version (tools/ci/version.py), write the
+#                          CHANGELOG entry, commit "Release X.Y.Z" to main, then release it
+#   none                   release the current version as it is (e.g. to retry a release
+#                          that failed half-way)
+# CHANGELOG entry: a "## Unreleased" section (optionally "## Unreleased — title") at the
+# top of anti_matter/CHANGELOG.md becomes the new version's entry. Without one, the entry
+# lists the commit subjects since the last release. "Dry run" shows the bump in the run
+# summary and stops: nothing is committed, tagged or published.
+#
+# Locally: python3 tools/ci/version.py bump minor|major|patch|X.Y.Z, fill in the CHANGELOG
+# entry and push to main; the push trigger below releases it.
 
 on:
   push:
     branches: [main]
     paths: [anti_matter/config.yaml]
   workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump (none = release the current version as it is)
+        type: choice
+        options: [none, patch, minor, major]
+        default: none
+      summary:
+        description: CHANGELOG title after the version (optional; default is the "## Unreleased — title")
+        type: string
+        required: false
+      dry_run:
+        description: Dry run (show the bump, commit and release nothing)
+        type: boolean
+        default: false
 
 permissions:
-  contents: write
+  contents: write # push the release commit, create the tag and the GitHub release
 
 concurrency:
   group: release
   cancel-in-progress: false
 
 jobs:
+  # Always runs, so the jobs after it never inherit a "skipped" status. Without a bump it
+  # only hands on the commit this run started from.
+  bump:
+    name: "Bump: ${{ inputs.bump || 'none' }}${{ inputs.dry_run && ' (dry run)' || '' }}"
+    runs-on: ubuntu-latest
+    outputs:
+      # The commit every later job builds, tests, tags and mirrors: the release commit this
+      # job pushed, or the commit the run started from.
+      sha: ${{ steps.push.outputs.sha || github.sha }}
+      proceed: ${{ steps.gate.outputs.proceed }}
+    env:
+      BUMP: ${{ inputs.bump || 'none' }}
+      DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
+    steps:
+      - name: Only from main
+        if: env.BUMP != 'none' && github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Run the bump on main (it was started on $GITHUB_REF)"
+          exit 1
+
+      - uses: actions/checkout@v4
+        if: env.BUMP != 'none'
+        with:
+          fetch-depth: 0 # tags and history: the release check and commit-subject notes need them
+
+      - name: Bump the version and write the CHANGELOG entry
+        id: v
+        if: env.BUMP != 'none'
+        env:
+          SUMMARY: ${{ inputs.summary }}
+        run: |
+          old=$(python3 tools/ci/version.py get)
+          new=$(python3 tools/ci/version.py next "$BUMP")
+          if ! git rev-parse -q --verify "refs/tags/v$old" >/dev/null; then
+            echo "::error::v$old is not released yet. Release it first (run this workflow with bump: none), or the bump would skip it."
+            exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/v$new" >/dev/null; then
+            echo "::error::v$new is already tagged"
+            exit 1
+          fi
+          if [ "$(git rev-list --count "v$old..HEAD")" = 0 ]; then
+            echo "::error::Nothing to release: main has no commits since v$old"
+            exit 1
+          fi
+          python3 tools/ci/version.py bump "$BUMP" --from-git --summary "$SUMMARY"
+          python3 tools/ci/version.py notes "$new" > "$RUNNER_TEMP/notes.md" # fails on an empty entry
+          echo "new=$new" >> "$GITHUB_OUTPUT"
+          {
+            echo "### $old → $new"
+            echo
+            cat "$RUNNER_TEMP/notes.md"
+            echo
+            echo '<details><summary>Changed files</summary>'
+            echo
+            echo '```'
+            git diff --stat
+            echo '```'
+            echo '</details>'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # A push made with GITHUB_TOKEN does not start workflows, so this does not start a
+      # second Release run: the jobs below release the pushed commit in this run.
+      - name: Commit and push to main
+        id: push
+        if: env.BUMP != 'none' && env.DRY_RUN != 'true'
+        env:
+          VERSION: ${{ steps.v.outputs.new }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Release $VERSION"
+          git push origin "HEAD:main"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Continue to the release?
+        id: gate
+        run: |
+          if [ "$DRY_RUN" = true ]; then
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            echo "Dry run: nothing was committed, tagged or published." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "proceed=true" >> "$GITHUB_OUTPUT"
+          fi
+
   prepare:
     name: Detect new version
+    needs: bump
+    if: needs.bump.outputs.proceed == 'true'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.v.outputs.version }}
@@ -30,6 +141,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ needs.bump.outputs.sha }}
           fetch-depth: 0
       - id: v
         run: |
@@ -45,28 +157,33 @@ jobs:
 
   ci:
     name: CI
-    needs: prepare
+    needs: [bump, prepare]
     if: needs.prepare.outputs.release == 'true'
     uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.bump.outputs.sha }}
 
   release:
     name: Tag and GitHub release
-    needs: [prepare, ci]
+    needs: [bump, prepare, ci]
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
+      SHA: ${{ needs.bump.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.bump.outputs.sha }}
       - run: python3 tools/ci/version.py notes "$VERSION" > notes.md
       - env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v$VERSION" --target "$GITHUB_SHA" \
+          gh release create "v$VERSION" --target "$SHA" \
             --title "Anti-Matter $VERSION" --notes-file notes.md
 
   sync:
     name: Publish to the add-on store repository
-    needs: [prepare, release]
+    needs: [bump, prepare, release]
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
@@ -79,6 +196,7 @@ jobs:
       - uses: actions/checkout@v4
         if: env.HAS_TOKEN == 'true'
         with:
+          ref: ${{ needs.bump.outputs.sha }}
           path: src
       - uses: actions/checkout@v4
         if: env.HAS_TOKEN == 'true'
