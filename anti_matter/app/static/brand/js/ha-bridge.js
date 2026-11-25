@@ -35,7 +35,8 @@
  *       -> Promise<{count, reason: "closed"|"aborted"|"alternative"|"timeout"|"replaced"}>
  *       Batch: the scanner stays open while onResult returns keepOpen:true (Android keeps
  *       it open until bar_code/close; iOS also keeps scanning; both handled). notify
- *       shows a native toast/dialog. Repeats of the same text within 2.5 s are dropped.
+ *       shows a native toast/dialog. The same text is dropped until it has been out of
+ *       view for 2.5 s (each repeat restarts that window).
  *   close()                       end the current scan (sends bar_code/close)
  *   notify(message) -> boolean    bar_code/notify while a scan is open
  *   haptic(kind) -> boolean       native haptic ("success", "warning", "failure", "light",
@@ -309,10 +310,20 @@
             session.finish("result", true);
             return;
           }
+          // The iOS app re-sends a code every 1.5 s for as long as it stays in view, so the
+          // repeat window SLIDES: every sighting of the same text (also while it is still
+          // being saved) pushes it on. Measured from the first sighting instead, a held code
+          // came back every 3 s and was then reported as "Already in your vault".
           var t = Date.now();
-          if (busy || (text === lastText && t - lastAt < REPEAT_MS)) return;
-          lastText = text;
-          lastAt = t;
+          if (text === lastText) {
+            var held = t - lastAt < REPEAT_MS;
+            lastAt = t;
+            if (held || busy) return;
+          } else {
+            if (busy) return; // another code while one is saving: it is re-sent shortly
+            lastText = text;
+            lastAt = t;
+          }
           busy = true;
           count++;
           armTimer();

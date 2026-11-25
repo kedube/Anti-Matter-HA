@@ -213,6 +213,8 @@
     vault: { meta: {}, categories: [], codes: [] },
     trash: { categories: [], codes: [] },
     haDevices: [],
+    /** Device list fetch: status "idle" | "loading" | "ok" | "error"; error = server reason. */
+    haLoad: { status: "idle", error: "", at: 0 },
     areas: [],
     backup: null,
     prefs: {},
@@ -258,17 +260,39 @@
 
   /** Side data that is not needed for the first paint: HA devices/areas, backup settings. */
   AM.loadSide = function () {
-    var p1 = Promise.all([
-      AM.api("/ha/devices").catch(function () { return []; }),
-      AM.api("/ha/areas").catch(function () { return []; }),
-    ]).then(function (r) {
-      AM.store.haDevices = Array.isArray(r[0]) ? r[0] : [];
-      AM.store.areas = Array.isArray(r[1]) ? r[1] : [];
-      AM.emit("ha", { devices: AM.store.haDevices, areas: AM.store.areas });
-    });
+    var p1 = AM.ha.reload();
     var p2 = AM.backup.reload().catch(function () {});
     return Promise.all([p1, p2]);
   };
+
+  // HA device list fetch, shared by first load and later retries (one request at a time).
+  var haInflight = null;
+  function loadHa() {
+    if (haInflight) return haInflight;
+    var st = AM.store.haLoad;
+    st.status = "loading";
+    st.error = "";
+    haInflight = Promise.all([
+      AM.api("/ha/devices").then(function (d) { return { ok: true, list: d }; },
+        function (e) { return { ok: false, error: (e && (e.code === "network" ? e.userMessage : e.message)) || "" }; }),
+      AM.api("/ha/areas").catch(function () { return null; }),
+    ]).then(function (r) {
+      haInflight = null;
+      st.at = Date.now();
+      if (r[0].ok) {
+        st.status = "ok";
+        AM.store.haDevices = Array.isArray(r[0].list) ? r[0].list : [];
+      } else {
+        // Keep a list that loaded earlier: a failed refresh should not unlink the picker.
+        st.status = AM.store.haDevices.length ? "ok" : "error";
+        st.error = r[0].error;
+        console.warn("[ha] device list failed:", r[0].error);
+      }
+      if (Array.isArray(r[1])) AM.store.areas = r[1];
+      AM.emit("ha", { devices: AM.store.haDevices, areas: AM.store.areas });
+    });
+    return haInflight;
+  }
 
   /** First load: vault + trash (both emitted even if unchanged), then side data. Rejects on failure. */
   AM.load = async function () {
@@ -1875,7 +1899,25 @@
   }
   AM.ha = {
     /** HA reachable and devices loaded (the add-on reports ha_available). */
-    available: function () { return !!(AM.store.info && AM.store.info.ha_available) && AM.store.haDevices.length > 0; },
+    available: function () { return AM.ha.enabled() && AM.store.haDevices.length > 0; },
+    /** The add-on runs under the Supervisor and may ask HA at all. */
+    enabled: function () { return !!(AM.store.info && AM.store.info.ha_available); },
+    /** {status: "idle"|"loading"|"ok"|"error", error} of the device list fetch. */
+    status: function () { return AM.store.haLoad; },
+    /** Re-fetch devices and areas (joins a fetch already running). Emits "ha" when done. */
+    reload: function () { return loadHa(); },
+    /** Retry when the last fetch failed or found nothing, so one failed request (HA
+     *  restarting, a slow template) does not leave the picker empty for the whole session.
+     *  Returns true when a fetch is running afterwards. */
+    ensure: function () {
+      if (!AM.ha.enabled()) return false;
+      var st = AM.store.haLoad;
+      if (st.status === "loading") return true;
+      if (st.status === "ok" && AM.store.haDevices.length) return false;
+      if (st.status !== "idle" && Date.now() - st.at < 3000) return false;
+      loadHa();
+      return true;
+    },
     devices: function () { return AM.store.haDevices; },
     areas: function () { return AM.store.areas; },
     device: function (id) {

@@ -618,8 +618,27 @@
 
   function haSection() {
     R.haSec = h("section", { class: "editor__section", "aria-labelledby": "ed-ha-h" });
+    AM.ha.ensure(); // a failed or empty earlier fetch is retried; "ha" re-fills when done
     fillHa();
     return R.haSec;
+  }
+  /** Why the picker is not shown: loading, HA failed (with its reason), or HA has no devices. */
+  function haNotice() {
+    var st = AM.ha.status();
+    if (!AM.ha.enabled()) {
+      return h("div", { class: "notice" }, icon("cloud-off"), h("div", { class: "notice__body" }, h("span", null, t("editor.ha_unavailable"))));
+    }
+    if (st.status === "loading" || st.status === "idle") {
+      return h("div", { class: "notice", role: "status" }, icon("loader-circle", "spin"), h("div", { class: "notice__body" }, h("span", null, t("editor.ha_loading"))));
+    }
+    var failed = st.status === "error";
+    var retry = h("button", { type: "button", class: "btn btn--sm", onclick: function () { AM.ha.reload(); fillHa(); } }, icon("refresh-cw"), h("span", null, t("action.retry")));
+    return h("div", { class: "notice" + (failed ? " notice--warn" : ""), role: "status" },
+      icon(failed ? "cloud-off" : "house-plug"),
+      h("div", { class: "notice__body" },
+        h("span", null, t(failed ? "editor.ha_error" : "editor.ha_no_devices")),
+        failed && st.error ? h("span", { class: "subtle", dir: "auto" }, st.error) : null,
+        h("div", { class: "notice__actions" }, retry)));
   }
   function fillHa() {
     var sec = R.haSec;
@@ -631,7 +650,7 @@
           h("span", { class: "suggest__icon" }, icon("house-plug")),
           h("span", { class: "suggest__txt" }, h("span", null, t("detail.linked_device")), h("b", { dir: "auto" }, m.haText || t("detail.linked_unknown"))),
           h("button", { type: "button", class: "btn btn--sm", onclick: function () { m.haId = ""; m.haText = ""; markDirty(); fillHa(); } }, icon("unlink"), h("span", null, t("detail.unlink")))) : null,
-        h("div", { class: "notice" }, icon("cloud-off"), h("div", { class: "notice__body" }, h("span", null, t("editor.ha_unavailable")))));
+        haNotice());
       R.haInput = R.haStatus = R.haSuggest = R.haList = null;
       return;
     }

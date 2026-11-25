@@ -1137,10 +1137,14 @@
       return { keepOpen: false };
     }
     var it = items[0];
+    // Saved a moment ago in this scan and seen again (glare made it drop out of view for a
+    // moment): not a duplicate worth a warning, just keep scanning.
+    if (savedThisSession(it.dup)) return { keepOpen: true };
     enrich(it);
     return serverDup(it).then(function (dup) {
       if (!S || S.nativeToken !== token) return { keepOpen: false };
       if (dup) it.dup = dup;
+      if (savedThisSession(it.dup)) return { keepOpen: true };
       if (it.dup) {
         it.kind = "dup";
         addTrayDup(it);
@@ -1161,6 +1165,11 @@
         });
       });
     });
+  }
+  /** dup ({id}) is a code this scanner session saved itself. */
+  function savedThisSession(dup) {
+    if (!S || !dup || !dup.id) return false;
+    return S.tray.some(function (r) { return r.status === "saved" && r.code && r.code.id === dup.id; });
   }
   function waitEnriched(it, ms) {
     var ps = [];

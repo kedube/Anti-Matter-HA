@@ -30,6 +30,9 @@ text>, ...extra}}``. ``error`` is a stable machine-readable code the UI localize
     too_large                    413     save-to-media: upload over 8 MB
     media_unavailable            500     save-to-media: /media folder missing or not writable
     ha_attribute_not_found       404     GET /api/ha/attribute
+    ha_unavailable               503     GET /api/ha/devices: HA timed out, refused or answered
+                                         with an error (``message`` says which); an empty
+                                         list is a 200 ``[]``
     invalid_request              422     request body/query failed validation; extra ``errors``
     vault_unreadable             500     the vault or Trash file on disk is not valid JSON / not a
                                          vault (fix it, or replace-import a backup)
@@ -74,12 +77,13 @@ from qrcode.exceptions import DataOverflowError
 
 import matter_dcl
 from backup_schedule import is_due, load_settings, mark_ran, period_key, save_settings
-from ha_client import MISSING as HA_MISSING, HomeAssistantClient
+from ha_client import MISSING as HA_MISSING, HAUnavailableError, HomeAssistantClient
 from matter_dcl import fetch_model_info, fetch_vendor_info
 from models import (
     Category,
     CategoryCreate,
     CategoryUpdate,
+    HaLink,
     MatterCode,
     MatterCodeCreate,
     MatterCodeUpdate,
@@ -943,7 +947,9 @@ async def create_code(body: MatterCodeCreate):
     code = MatterCode(**data)
     _apply_code_fields_strict(code)
     if ha_link:
-        code.ha_link = ha_link
+        # model_dump() made it a dict; assigning that to the HaLink field unvalidated
+        # logged a pydantic serializer warning on every save.
+        code.ha_link = HaLink.model_validate(ha_link)
     _check_category_ids(vault, code.category_ids)
     dup = _find_duplicate_code(vault, code.model_dump(mode="json"))
     if dup:
@@ -967,7 +973,7 @@ async def update_code(code_id: str, body: MatterCodeUpdate):
     for key, value in updates.items():
         setattr(code, key, value)
     if ha_link is not None:
-        code.ha_link = ha_link
+        code.ha_link = HaLink.model_validate(ha_link)
     # code_type too: switching the protocol must re-derive the stored fields, exactly as
     # creating the code with that type would.
     if {"manual_code", "qr_payload", "code_type"} & updates.keys():
@@ -1469,8 +1475,12 @@ async def zwave_device_info(manufacturer_id: int, product_type: int, product_id:
 async def ha_devices():
     """[{id, name, area, manufacturer, model, entities}] for every HA device — populates
     the device picker in the code dialog. ha_link stores only the device_id (linking to
-    its own HA page); the entity ids are shown and searched to tell look-alikes apart."""
-    return await ha.list_devices()
+    its own HA page); the entity ids are shown and searched to tell look-alikes apart.
+    503 ``ha_unavailable`` when HA could not list them (``[]`` means HA has none)."""
+    try:
+        return await ha.list_devices()
+    except HAUnavailableError as exc:
+        raise _api_error(503, "ha_unavailable", str(exc))
 
 
 # --- Static UI (relative paths for ingress) ---
