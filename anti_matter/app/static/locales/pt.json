@@ -791,6 +791,7 @@
   "scan.native_alt": "Usar uma fotografia / escrever",
   "scan.native_body": "O leitor da própria aplicação está aberto. Cada código lido aparece aqui; os duplicados são indicados no leitor.",
   "scan.native_dup": "Já está no seu cofre: {name}",
+  "scan.native_found": "QR {protocol} detetado — a guardar…",
   "scan.native_saved": "Guardado: {name}",
   "scan.native_scan_title": "Ler códigos de emparelhamento",
   "scan.native_title": "A ler com a aplicação Home Assistant",

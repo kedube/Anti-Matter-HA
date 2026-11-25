@@ -758,6 +758,7 @@
   "scan.native_alt": "Bruk et bilde / skriv den inn",
   "scan.native_body": "Appens egen skanner er åpen. Hver kode du skanner, havner her. Duplikater vises i skanneren.",
   "scan.native_dup": "Allerede i hvelvet: {name}",
+  "scan.native_found": "{protocol}-QR funnet – lagrer …",
   "scan.native_saved": "Lagret: {name}",
   "scan.native_scan_title": "Skann paringskoder",
   "scan.native_title": "Skanner med Home Assistant-appen",

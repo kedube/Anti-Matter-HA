@@ -758,6 +758,7 @@
   "scan.native_alt": "Käytä kuvaa / kirjoita",
   "scan.native_body": "Sovelluksen oma skanneri on auki. Jokainen skannaamasi koodi tulee tänne; kaksoiskappaleista ilmoitetaan skannerissa.",
   "scan.native_dup": "Jo holvissa: {name}",
+  "scan.native_found": "{protocol}-QR löytyi – tallennetaan…",
   "scan.native_saved": "Tallennettu: {name}",
   "scan.native_scan_title": "Skannaa pariliitoskoodeja",
   "scan.native_title": "Skannataan Home Assistant -sovelluksella",

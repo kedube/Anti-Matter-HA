@@ -725,6 +725,7 @@
   "scan.native_alt": "使用照片 / 手動輸入",
   "scan.native_body": "App 內建的掃描器已開啟。每個掃描到的代碼都會顯示在這裡；重複項目會在掃描器中提示。",
   "scan.native_dup": "已在保險庫中：{name}",
+  "scan.native_found": "已識別 {protocol} QR，正在儲存…",
   "scan.native_saved": "已儲存：{name}",
   "scan.native_scan_title": "掃描配對代碼",
   "scan.native_title": "正在使用 Home Assistant App 掃描",

@@ -824,6 +824,7 @@
   "scan.native_alt": "Фото / ввести вручну",
   "scan.native_body": "Відкрито вбудований сканер застосунку. Кожен відсканований код з’являється тут; про дублікати повідомляє сканер.",
   "scan.native_dup": "Уже у сховищі: {name}",
+  "scan.native_found": "Знайдено QR {protocol} — збереження…",
   "scan.native_saved": "Збережено: {name}",
   "scan.native_scan_title": "Сканування кодів сполучення",
   "scan.native_title": "Сканування застосунком Home Assistant",

@@ -890,6 +890,7 @@
   "scan.native_alt": "استخدام صورة / كتابة الرمز",
   "scan.native_body": "ماسح التطبيق مفتوح. يظهر هنا كل رمز تمسحه، ويُبلَّغ عن النسخ المكررة في الماسح.",
   "scan.native_dup": "موجود بالفعل في خزنتك: {name}",
+  "scan.native_found": "تم العثور على QR {protocol} — جارٍ الحفظ…",
   "scan.native_saved": "تم الحفظ: {name}",
   "scan.native_scan_title": "مسح رموز الإقران",
   "scan.native_title": "المسح باستخدام تطبيق Home Assistant",

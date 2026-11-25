@@ -35,10 +35,16 @@
  *       -> Promise<{count, reason: "closed"|"aborted"|"alternative"|"timeout"|"replaced"}>
  *       Batch: the scanner stays open while onResult returns keepOpen:true (Android keeps
  *       it open until bar_code/close; iOS also keeps scanning; both handled). notify
- *       shows a native toast/dialog. The same text is dropped until it has been out of
- *       view for 2.5 s (each repeat restarts that window).
+ *       is shown over the scanner (see notify()). The same text is dropped until it has
+ *       been out of view for 2.5 s (each repeat restarts that window).
  *   close()                       end the current scan (sends bar_code/close)
- *   notify(message) -> boolean    bar_code/notify while a scan is open
+ *   notify(message, {passing?, durationMs?}) -> boolean
+ *       A message over the open scanner. iOS app 2026.2+ on iOS 18+: the app's toast
+ *       (toast/show), drawn in its own window ABOVE the full-screen scanner, and taken
+ *       down when the scan ends. Elsewhere bar_code/notify: Android shows it as a dialog
+ *       over its scanner; the iOS app since 2026.4 draws it on the page BEHIND the
+ *       scanner, so it was only seen after closing. passing:true = a short-lived status
+ *       ("found, saving..."): shown only as a toast, never as a dialog or banner (false).
  *   haptic(kind) -> boolean       native haptic ("success", "warning", "failure", "light",
  *                                 "medium", "heavy", "selection"); false outside the app
  *   navigateToDevice(deviceId) -> boolean   open /config/devices/device/<id> in the HA
@@ -53,8 +59,10 @@
   var DETECT_TIMEOUT_MS = 5000;
   var DEFAULT_TIMEOUT_MS = 5 * 60 * 1000;
   var REPEAT_MS = 2500;
+  var TOAST_ID = "anti-matter-scan"; // one toast slot: each message replaces the last
+  var TOAST_MS = 3000;
 
-  var S = { detect: null, haWin: null, host: null, ext: null, active: null };
+  var S = { detect: null, haWin: null, host: null, ext: null, active: null, toast: false };
 
   function bridgeError(code, message) {
     var e = new Error(message || code);
@@ -226,6 +234,33 @@
   }
 
   /**
+   * Can the app show toast/show above its scanner? Read from the app's user agent:
+   * "... Home Assistant/2026.10.3 (io.robbie.HomeAssistant; build:2026.3322; iOS 26.1.0) ...".
+   * toast/show shipped in the iOS app 2026.2; its toast needs iOS 18 (macOS 15 on a Mac).
+   * Android ("...; Android 15; ...") and anything unrecognised keep bar_code/notify.
+   */
+  function canToast() {
+    try {
+      if (!isCompanion()) return false;
+      var ua = String((global.navigator && global.navigator.userAgent) || "");
+      var app = /Home Assistant\/(\d+)\.(\d+)/.exec(ua);
+      var os = /;\s*(iOS|iPadOS|macOS)\s+(\d+)/.exec(ua);
+      if (!app || !os) return false;
+      var y = +app[1], m = +app[2];
+      if (y < 2026 || (y === 2026 && m < 2)) return false;
+      return +os[2] >= (os[1] === "macOS" ? 15 : 18);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function hideToast() {
+    if (!S.toast) return;
+    S.toast = false;
+    if (isCompanion()) fire({ type: "toast/hide", payload: { id: TOAST_ID } });
+  }
+
+  /**
    * One native scanner session. many=false: first accepted result resolves.
    * many=true: results go to opts.onResult until it says keepOpen:false.
    */
@@ -275,6 +310,7 @@
             ended = true;
             cleanup();
             if (close) sendClose();
+            hideToast(); // the toast belongs to the scanner screen: it goes with it
             if (many) resolve({ count: count, reason: reason });
             else if (reason === "result") resolve(session.result);
             else reject(bridgeError(reason, "Native scan ended: " + reason));
@@ -382,8 +418,19 @@
     else if (available()) sendClose();
   }
 
-  function notify(message) {
+  function notify(message, opts) {
+    opts = opts || {};
     if (!isCompanion() || !message) return false;
+    if (canToast()) {
+      var ms = opts.durationMs > 0 ? opts.durationMs : TOAST_MS;
+      var sent = fire({
+        type: "toast/show",
+        payload: { id: TOAST_ID, message: String(message), duration: ms / 1000 },
+      });
+      if (sent) S.toast = true;
+      return !!sent;
+    }
+    if (opts.passing) return false; // a dialog / hidden banner for a passing status: no
     return !!fire({ type: "bar_code/notify", payload: { message: String(message) } });
   }
 

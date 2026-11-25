@@ -758,6 +758,7 @@
   "scan.native_alt": "Foto nutzen / eintippen",
   "scan.native_body": "Der Scanner der App ist geöffnet. Jeder gescannte Code landet hier; Duplikate werden im Scanner gemeldet.",
   "scan.native_dup": "Bereits im Tresor: {name}",
+  "scan.native_found": "{protocol}-QR erkannt – wird gespeichert…",
   "scan.native_saved": "Gespeichert: {name}",
   "scan.native_scan_title": "Kopplungscodes scannen",
   "scan.native_title": "Scannen mit der Home Assistant-App",

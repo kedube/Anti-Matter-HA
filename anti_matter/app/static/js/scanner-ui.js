@@ -1152,6 +1152,9 @@
         AM.log("Scan: captured protocol=" + it.proto + " source=native duplicate");
         return { keepOpen: true, notify: t("scan.native_dup", { name: it.dup.name }) };
       }
+      // Acknowledge on the scanner screen at once; "Saved: <name>" replaces it. Only where
+      // the app shows it as a passing toast (iOS), never as a dialog to dismiss (Android).
+      nativeStatus(t("scan.native_found", { protocol: AM.proto.name(it.body) }));
       return waitEnriched(it, 1200).then(function () {
         var sug = suggestName(it);
         it.name = (sug && sug.name) || nextDefaultName();
@@ -1165,6 +1168,10 @@
         });
       });
     });
+  }
+  /** A passing status over the app scanner (long enough to outlast a slow save). */
+  function nativeStatus(message) {
+    try { B().notify(message, { passing: true, durationMs: 15000 }); } catch (e) { /* no bridge */ }
   }
   /** dup ({id}) is a code this scanner session saved itself. */
   function savedThisSession(dup) {

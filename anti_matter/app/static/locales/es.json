@@ -791,6 +791,7 @@
   "scan.native_alt": "Usar una foto / escribirlo",
   "scan.native_body": "El escáner de la app está abierto. Cada código que escanees llega aquí; los duplicados se indican en el escáner.",
   "scan.native_dup": "Ya está en tu bóveda: {name}",
+  "scan.native_found": "QR de {protocol} detectado: guardando…",
   "scan.native_saved": "Guardado: {name}",
   "scan.native_scan_title": "Escanear códigos de emparejamiento",
   "scan.native_title": "Escaneando con la app Home Assistant",

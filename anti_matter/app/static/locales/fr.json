@@ -791,6 +791,7 @@
   "scan.native_alt": "Utiliser une photo / saisir",
   "scan.native_body": "Le scanner de l’application est ouvert. Chaque code scanné arrive ici ; les doublons sont signalés dans le scanner.",
   "scan.native_dup": "Déjà dans votre coffre : {name}",
+  "scan.native_found": "QR {protocol} détecté — enregistrement…",
   "scan.native_saved": "Enregistré : {name}",
   "scan.native_scan_title": "Scanner des codes d’appairage",
   "scan.native_title": "Scan avec l’application Home Assistant",
