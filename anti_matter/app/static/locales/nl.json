@@ -758,7 +758,7 @@
   "scan.native_alt": "Foto gebruiken / intypen",
   "scan.native_body": "De eigen scanner van de app is geopend. Elke code die je scant komt hier terecht; duplicaten worden in de scanner gemeld.",
   "scan.native_dup": "Staat al in je kluis: {name}",
-  "scan.native_found": "{protocol}-QR gevonden – opslaan…",
+  "scan.native_next": "Richt op de volgende QR-code",
   "scan.native_saved": "Opgeslagen: {name}",
   "scan.native_scan_title": "Koppelcodes scannen",
   "scan.native_title": "Scannen met de Home Assistant-app",

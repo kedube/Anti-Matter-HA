@@ -758,7 +758,7 @@
   "scan.native_alt": "Fotoğraf kullan / yaz",
   "scan.native_body": "Uygulamanın kendi tarayıcısı açık. Taradığınız her kod buraya gelir; kopyalar tarayıcıda bildirilir.",
   "scan.native_dup": "Zaten kasanızda: {name}",
-  "scan.native_found": "{protocol} QR algılandı — kaydediliyor…",
+  "scan.native_next": "Sonraki QR koduna doğrultun",
   "scan.native_saved": "Kaydedildi: {name}",
   "scan.native_scan_title": "Eşleştirme kodlarını tara",
   "scan.native_title": "Home Assistant uygulamasıyla taranıyor",

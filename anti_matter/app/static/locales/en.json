@@ -758,7 +758,7 @@
   "scan.native_alt": "Use a photo / type it",
   "scan.native_body": "The app’s own scanner is open. Each code you scan lands here; duplicates are reported in the scanner.",
   "scan.native_dup": "Already in your vault: {name}",
-  "scan.native_found": "{protocol} QR found — saving…",
+  "scan.native_next": "Point at the next QR code",
   "scan.native_saved": "Saved: {name}",
   "scan.native_scan_title": "Scan pairing codes",
   "scan.native_title": "Scanning with the Home Assistant app",

@@ -725,7 +725,7 @@
   "scan.native_alt": "写真を使う / 手入力する",
   "scan.native_body": "アプリ内蔵のスキャナーが開いています。スキャンしたコードはここに表示され、重複はスキャナー内で通知されます。",
   "scan.native_dup": "保管庫に登録済み: {name}",
-  "scan.native_found": "{protocol} QR を検出 — 保存中…",
+  "scan.native_next": "次の QR コードにカメラを向けてください",
   "scan.native_saved": "保存しました: {name}",
   "scan.native_scan_title": "ペアリングコードをスキャン",
   "scan.native_title": "Home Assistant アプリでスキャン中",

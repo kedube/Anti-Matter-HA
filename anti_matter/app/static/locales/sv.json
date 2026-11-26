@@ -758,7 +758,7 @@
   "scan.native_alt": "Använd ett foto / skriv in",
   "scan.native_body": "Appens egen skanner är öppen. Varje kod du skannar hamnar här; dubbletter rapporteras i skannern.",
   "scan.native_dup": "Finns redan i ditt valv: {name}",
-  "scan.native_found": "{protocol}-QR hittad – sparar…",
+  "scan.native_next": "Rikta mot nästa QR-kod",
   "scan.native_saved": "Sparad: {name}",
   "scan.native_scan_title": "Skanna parkopplingskoder",
   "scan.native_title": "Skannar med Home Assistant-appen",

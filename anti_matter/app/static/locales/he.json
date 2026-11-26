@@ -791,7 +791,7 @@
   "scan.native_alt": "השתמש בתמונה / הקלד",
   "scan.native_body": "הסורק של היישום פתוח. כל קוד שתסרוק יגיע לכאן; כפילויות מדווחות בסורק.",
   "scan.native_dup": "כבר בכספת: {name}",
-  "scan.native_found": "נמצא QR של {protocol} — שומר…",
+  "scan.native_next": "כוון אל קוד ה-QR הבא",
   "scan.native_saved": "נשמר: {name}",
   "scan.native_scan_title": "סרוק קודי צימוד",
   "scan.native_title": "סורק עם יישום Home Assistant",

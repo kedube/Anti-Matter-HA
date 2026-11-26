@@ -791,7 +791,7 @@
   "scan.native_alt": "Usa una foto / digitalo",
   "scan.native_body": "Lo scanner dell’app è aperto. Ogni codice scansionato arriva qui; i duplicati vengono segnalati nello scanner.",
   "scan.native_dup": "Già nella tua cassaforte: {name}",
-  "scan.native_found": "QR {protocol} rilevato: salvataggio…",
+  "scan.native_next": "Inquadra il codice QR successivo",
   "scan.native_saved": "Salvato: {name}",
   "scan.native_scan_title": "Scansiona codici di abbinamento",
   "scan.native_title": "Scansione con l’app Home Assistant",

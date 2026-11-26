@@ -1150,28 +1150,26 @@
         addTrayDup(it);
         AM.haptic("warning");
         AM.log("Scan: captured protocol=" + it.proto + " source=native duplicate");
-        return { keepOpen: true, notify: t("scan.native_dup", { name: it.dup.name }) };
+        return nativeOutcome(t("scan.native_dup", { name: it.dup.name }));
       }
-      // Acknowledge on the scanner screen at once; "Saved: <name>" replaces it. Only where
-      // the app shows it as a passing toast (iOS), never as a dialog to dismiss (Android).
-      nativeStatus(t("scan.native_found", { protocol: AM.proto.name(it.body) }));
       return waitEnriched(it, 1200).then(function () {
         var sug = suggestName(it);
         it.name = (sug && sug.name) || nextDefaultName();
         return saveItem(it).then(function (ok) {
           if (!S) return { keepOpen: false };
           setView("native");
-          if (ok === true) return { keepOpen: true, notify: t("scan.native_saved", { name: it.name }) };
-          if (ok === "dup") return { keepOpen: true, notify: t("scan.native_dup", { name: it.dup.name }) };
+          if (ok === true) return nativeOutcome(t("scan.native_saved", { name: it.name }));
+          if (ok === "dup") return nativeOutcome(t("scan.native_dup", { name: it.dup.name }));
           S.native.handoff = true;
           return { keepOpen: false };
         });
       });
     });
   }
-  /** A passing status over the app scanner (long enough to outlast a slow save). */
-  function nativeStatus(message) {
-    try { B().notify(message, { passing: true, durationMs: 15000 }); } catch (e) { /* no bridge */ }
+  /** Keep scanning and say what happened on the scanner screen (the iOS app shows it as
+   *  the scanner's heading, with the hint under it; Android as a dialog). */
+  function nativeOutcome(message) {
+    return { keepOpen: true, notify: message, notifyHint: t("scan.native_next") };
   }
   /** dup ({id}) is a code this scanner session saved itself. */
   function savedThisSession(dup) {

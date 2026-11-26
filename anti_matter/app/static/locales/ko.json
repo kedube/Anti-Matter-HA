@@ -725,7 +725,7 @@
   "scan.native_alt": "사진 사용 / 직접 입력",
   "scan.native_body": "앱의 자체 스캐너가 열려 있습니다. 스캔한 코드는 여기에 추가되며, 중복 항목은 스캐너에 표시됩니다.",
   "scan.native_dup": "이미 보관함에 있음: {name}",
-  "scan.native_found": "{protocol} QR 감지됨 — 저장 중…",
+  "scan.native_next": "다음 QR 코드를 비추세요",
   "scan.native_saved": "저장됨: {name}",
   "scan.native_scan_title": "페어링 코드 스캔",
   "scan.native_title": "Home Assistant 앱으로 스캔 중",

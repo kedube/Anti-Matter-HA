@@ -31,20 +31,21 @@
  *       (user tapped the alternative option) | "timeout" | "replaced" | "closed"
  *   scanMany({title, description, alternativeOptionLabel?, formats, wrongFormatMessage?,
  *             idleTimeoutMs=300000,
- *             onResult(text, format) -> {keepOpen:boolean, notify?:string} | Promise})
+ *             onResult(text, format) -> {keepOpen:boolean, notify?:string, notifyHint?:string}
+ *                                       | Promise})
  *       -> Promise<{count, reason: "closed"|"aborted"|"alternative"|"timeout"|"replaced"}>
  *       Batch: the scanner stays open while onResult returns keepOpen:true (Android keeps
- *       it open until bar_code/close; iOS also keeps scanning; both handled). notify
- *       is shown over the scanner (see notify()). The same text is dropped until it has
- *       been out of view for 2.5 s (each repeat restarts that window).
+ *       it open until bar_code/close; iOS also keeps scanning; both handled). The same
+ *       text is dropped until it has been out of view for 2.5 s (each repeat restarts
+ *       that window). notify says what happened to the code, on the scanner screen:
+ *       - iOS app: the scanner is reopened with notify as its heading and notifyHint (or
+ *         the original description) under it. Nothing else the iOS app offers is seen
+ *         while its full-screen scanner is open: bar_code/notify has been drawn on the
+ *         page BEHIND the scanner since app 2026.4 (seen only after closing it), and the
+ *         app's toast/show appears only once the scanner is gone.
+ *       - Android app: bar_code/notify, a dialog over its scanner.
  *   close()                       end the current scan (sends bar_code/close)
- *   notify(message, {passing?, durationMs?}) -> boolean
- *       A message over the open scanner. iOS app 2026.2+ on iOS 18+: the app's toast
- *       (toast/show), drawn in its own window ABOVE the full-screen scanner, and taken
- *       down when the scan ends. Elsewhere bar_code/notify: Android shows it as a dialog
- *       over its scanner; the iOS app since 2026.4 draws it on the page BEHIND the
- *       scanner, so it was only seen after closing. passing:true = a short-lived status
- *       ("found, saving..."): shown only as a toast, never as a dialog or banner (false).
+ *   notify(message) -> boolean    bar_code/notify while a scan is open (see above for iOS)
  *   haptic(kind) -> boolean       native haptic ("success", "warning", "failure", "light",
  *                                 "medium", "heavy", "selection"); false outside the app
  *   navigateToDevice(deviceId) -> boolean   open /config/devices/device/<id> in the HA
@@ -59,10 +60,11 @@
   var DETECT_TIMEOUT_MS = 5000;
   var DEFAULT_TIMEOUT_MS = 5 * 60 * 1000;
   var REPEAT_MS = 2500;
-  var TOAST_ID = "anti-matter-scan"; // one toast slot: each message replaces the last
-  var TOAST_MS = 3000;
+  // A reopened iOS scanner restarts its camera and reports a code still in view at once:
+  // the repeat window is stretched by this much so that sighting is not a new scan.
+  var REOPEN_MS = 2000;
 
-  var S = { detect: null, haWin: null, host: null, ext: null, active: null, toast: false };
+  var S = { detect: null, haWin: null, host: null, ext: null, active: null };
 
   function bridgeError(code, message) {
     var e = new Error(message || code);
@@ -234,30 +236,19 @@
   }
 
   /**
-   * Can the app show toast/show above its scanner? Read from the app's user agent:
-   * "... Home Assistant/2026.10.3 (io.robbie.HomeAssistant; build:2026.3322; iOS 26.1.0) ...".
-   * toast/show shipped in the iOS app 2026.2; its toast needs iOS 18 (macOS 15 on a Mac).
-   * Android ("...; Android 15; ...") and anything unrecognised keep bar_code/notify.
+   * The iOS / iPadOS / Mac app, from its user agent: "... Home Assistant/2026.10.3
+   * (io.robbie.HomeAssistant; build:2026.3322; iOS 26.1.0) Mobile/HomeAssistant ...".
+   * Android ("Home Assistant/2026.10.1-full (Android 15; ...)") and anything unrecognised
+   * are not.
    */
-  function canToast() {
+  function isIosApp() {
     try {
       if (!isCompanion()) return false;
       var ua = String((global.navigator && global.navigator.userAgent) || "");
-      var app = /Home Assistant\/(\d+)\.(\d+)/.exec(ua);
-      var os = /;\s*(iOS|iPadOS|macOS)\s+(\d+)/.exec(ua);
-      if (!app || !os) return false;
-      var y = +app[1], m = +app[2];
-      if (y < 2026 || (y === 2026 && m < 2)) return false;
-      return +os[2] >= (os[1] === "macOS" ? 15 : 18);
+      return /\(io\.robbie\.HomeAssistant/.test(ua) || /Home Assistant\/[^(]*\([^)]*;\s*(iOS|iPadOS|macOS) \d/.test(ua);
     } catch (e) {
       return false;
     }
-  }
-
-  function hideToast() {
-    if (!S.toast) return;
-    S.toast = false;
-    if (isCompanion()) fire({ type: "toast/hide", payload: { id: TOAST_ID } });
   }
 
   /**
@@ -310,7 +301,6 @@
             ended = true;
             cleanup();
             if (close) sendClose();
-            hideToast(); // the toast belongs to the scanner screen: it goes with it
             if (many) resolve({ count: count, reason: reason });
             else if (reason === "result") resolve(session.result);
             else reject(bridgeError(reason, "Native scan ended: " + reason));
@@ -353,7 +343,7 @@
           var t = Date.now();
           if (text === lastText) {
             var held = t - lastAt < REPEAT_MS;
-            lastAt = t;
+            lastAt = Math.max(lastAt, t); // lastAt is ahead of now just after a reopen
             if (held || busy) return;
           } else {
             if (busy) return; // another code while one is saving: it is re-sent shortly
@@ -373,8 +363,13 @@
             function (r) {
               busy = false;
               if (ended) return;
-              if (r && r.notify) notify(String(r.notify));
-              if (!r || r.keepOpen === false) session.finish("closed", true);
+              var stay = !!r && r.keepOpen !== false;
+              if (r && r.notify) {
+                if (!isIosApp()) notify(String(r.notify));
+                else if (stay) reopen(String(r.notify), r.notifyHint);
+                // (iOS and closing: the add-on's own screen shows the outcome)
+              }
+              if (!stay) session.finish("closed", true);
             },
             function () {
               busy = false;
@@ -382,24 +377,38 @@
           );
         }
 
+        /** Open the app scanner (again) with this heading; false if the app refused. */
+        function openScanner(title, description) {
+          var p = { title: String(title || "Scan QR code"), description: String(description || "") };
+          if (opts.alternativeOptionLabel) p.alternative_option_label = String(opts.alternativeOptionLabel);
+          // HA assigns msg.id inside fireMessage (on the host-realm copy); register it
+          // before returning to the event loop, so no reply can arrive first.
+          var sent = fire({ type: "bar_code/scan", payload: p });
+          if (!sent || typeof sent.id !== "number") return false;
+          tap.state.ids.push(sent.id); // earlier ids stay: a late reply to them still counts
+          session.id = sent.id;
+          return true;
+        }
+
+        /**
+         * iOS: put the outcome on the scanner screen itself. Asked to scan while its scanner
+         * is open, the app swaps in a new one (no "aborted" for the old one) showing the new
+         * heading; its camera restarts, so the repeat window is stretched over that.
+         */
+        function reopen(title, hint) {
+          if (openScanner(title, hint == null ? opts.description : hint)) {
+            lastAt = Math.max(lastAt, Date.now() + REOPEN_MS);
+          }
+        }
+
         global.addEventListener("message", onMessage);
         global.addEventListener("pagehide", onPageHide);
         S.active = session;
 
-        var payload = {
-          title: String(opts.title || "Scan QR code"),
-          description: String(opts.description || ""),
-        };
-        if (opts.alternativeOptionLabel) payload.alternative_option_label = String(opts.alternativeOptionLabel);
-        // HA assigns msg.id inside fireMessage (on the host-realm copy); register it
-        // before returning to the event loop, so no reply can arrive first.
-        var sent = fire({ type: "bar_code/scan", payload: payload });
-        if (!sent || typeof sent.id !== "number") {
+        if (!openScanner(opts.title, opts.description)) {
           session.finish("unavailable", false);
           return;
         }
-        tap.state.ids.push(sent.id);
-        session.id = sent.id;
         armTimer();
       });
     });
@@ -418,19 +427,8 @@
     else if (available()) sendClose();
   }
 
-  function notify(message, opts) {
-    opts = opts || {};
+  function notify(message) {
     if (!isCompanion() || !message) return false;
-    if (canToast()) {
-      var ms = opts.durationMs > 0 ? opts.durationMs : TOAST_MS;
-      var sent = fire({
-        type: "toast/show",
-        payload: { id: TOAST_ID, message: String(message), duration: ms / 1000 },
-      });
-      if (sent) S.toast = true;
-      return !!sent;
-    }
-    if (opts.passing) return false; // a dialog / hidden banner for a passing status: no
     return !!fire({ type: "bar_code/notify", payload: { message: String(message) } });
   }
 

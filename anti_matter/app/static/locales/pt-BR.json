@@ -791,7 +791,7 @@
   "scan.native_alt": "Usar uma foto / digitar",
   "scan.native_body": "O leitor do próprio app está aberto. Cada código escaneado aparece aqui; duplicatas são indicadas no leitor.",
   "scan.native_dup": "Já está no seu cofre: {name}",
-  "scan.native_found": "QR {protocol} detectado — salvando…",
+  "scan.native_next": "Aponte para o próximo código QR",
   "scan.native_saved": "Salvo: {name}",
   "scan.native_scan_title": "Escanear códigos de pareamento",
   "scan.native_title": "Escaneando com o app Home Assistant",

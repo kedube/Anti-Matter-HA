@@ -824,7 +824,7 @@
   "scan.native_alt": "Użyj zdjęcia / wpisz",
   "scan.native_body": "Wbudowany skaner aplikacji jest otwarty. Każdy zeskanowany kod trafia tutaj; duplikaty są zgłaszane w skanerze.",
   "scan.native_dup": "Już w sejfie: {name}",
-  "scan.native_found": "Wykryto QR {protocol} — zapisywanie…",
+  "scan.native_next": "Skieruj na następny kod QR",
   "scan.native_saved": "Zapisano: {name}",
   "scan.native_scan_title": "Skanuj kody parowania",
   "scan.native_title": "Skanowanie aplikacją Home Assistant",

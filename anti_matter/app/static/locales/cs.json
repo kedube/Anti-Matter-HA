@@ -824,7 +824,7 @@
   "scan.native_alt": "Použít fotku / zadat ručně",
   "scan.native_body": "Vlastní čtečka aplikace je otevřená. Každý naskenovaný kód se objeví zde; duplikáty hlásí čtečka.",
   "scan.native_dup": "Již v trezoru: {name}",
-  "scan.native_found": "Nalezen QR {protocol} — ukládám…",
+  "scan.native_next": "Namiřte na další QR kód",
   "scan.native_saved": "Uloženo: {name}",
   "scan.native_scan_title": "Skenovat párovací kódy",
   "scan.native_title": "Skenování aplikací Home Assistant",

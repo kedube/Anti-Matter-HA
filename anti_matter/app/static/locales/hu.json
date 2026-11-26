@@ -758,7 +758,7 @@
   "scan.native_alt": "Fotó használata / beírás",
   "scan.native_body": "Az alkalmazás saját olvasója nyitva van. Minden beolvasott kód ide érkezik; az ismétlődéseket az olvasó jelzi.",
   "scan.native_dup": "Már a széfben: {name}",
-  "scan.native_found": "{protocol} QR megtalálva – mentés…",
+  "scan.native_next": "Irányítsd a következő QR-kódra",
   "scan.native_saved": "Mentve: {name}",
   "scan.native_scan_title": "Párosítási kódok beolvasása",
   "scan.native_title": "Beolvasás a Home Assistant alkalmazással",
