@@ -3,6 +3,10 @@
 Detailed per-commit history is in [git log](https://github.com/kedube/Anti-Matter-HA/commits/main).
 This file summarizes the notable changes by theme.
 
+## 3.2.1
+
+- Update how iphone handles scanning QR coes
+
 ## 3.2.0
 
 - Enhance scanning experience
